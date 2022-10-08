@@ -13,7 +13,7 @@ int main() {
     Snake snake;
     for(size_t i = 0; i < snake.size(); i++)
     {
-        VIDEO_MEMORY[snake.bodyCoord(i)] = '#';
+        VIDEO_MEMORY[snake.bodyCoord1D(i)] = '#';
     }
 
     std::array<int16_t, 2> cmd_dir;
@@ -36,7 +36,8 @@ int main() {
             }
             snake.updatePhysics(cmd_dir);
             cmd_dir = std::array<int16_t, 2>{0,0};
-            StaticVector<uint16_t, 20> to_erase = snake.offsetsToErase();
+            // StaticVector<uint16_t, 20> to_erase = snake.offsetsToErase();
+            ecs::vector<uint16_t> to_erase = snake.offsetsToErase();
             for(size_t i = 0; i < to_erase.size(); i++)
             {
                 VIDEO_MEMORY[to_erase.at(i)] = ' ';
