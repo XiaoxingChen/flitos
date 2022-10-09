@@ -26,13 +26,14 @@ endif
 
 LDFILE   = riscv32-console.ld
 INCLUDE  += -I $(INC_DIR)
-CFLAGS   += -ffreestanding  -nostartfiles -nostdlib -nodefaultlibs -fno-exceptions
-LDFLAGS  += -lc -lnosys
+CFLAGS   += -ffreestanding  -nostartfiles -fno-exceptions
+LDFLAGS  += -lc -lnosys -lgcc -lstdc++
 LDFLAGS  += -Wl,--gc-sections -Wl,-T,$(LDFILE)
 
 TARGET_NAME = riscv-console-example
 
 TARGET_OBJS =   $(OBJ_DIR)/main.o               \
+				$(OBJ_DIR)/new_delete_overloading.o               \
                 $(OBJ_DIR)/crt0.o               \
                 $(OBJ_DIR)/interrupt.o          \
                 $(OBJ_DIR)/startup.o
