@@ -25,7 +25,6 @@ private:
     void reallocateMemory(size_t desire)
     {
         T* old_mem = mem_;
-
         cap_ = std::max<size_t>(2, findMemSize(desire));
         mem_ = static_cast<T*>(malloc(cap_ * sizeof(T)));
         if(old_mem != nullptr)
@@ -33,10 +32,10 @@ private:
             memcpy(mem_, old_mem, size_ * sizeof(T));
             free(old_mem);
         }
-
     }
 public:
     vector(){};
+    vector(size_t n) { resize(n); };
 
     void reserve(size_t n) { reallocateMemory(n); }
     size_t capacity() const { return cap_; }
@@ -47,7 +46,11 @@ public:
         size_ = n;
         for(size_t i = old_size; i < n; i++)
         {
-            mem_[i] = T();
+            new (&mem_[i]) T;
+        }
+        for(size_t i = size_; i < old_size; i++)
+        {
+            mem_[i].~T();
         }
 
     }
@@ -76,7 +79,10 @@ public:
     T* data() { return mem_; }
 
     bool empty() const { return 0 == size_; }
-    void clear() { size_ = 0; }
+    void clear() 
+    {
+        resize(0);
+    }
 };
 
 
