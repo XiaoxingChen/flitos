@@ -1,7 +1,14 @@
 #include <stdint.h>
 #include "snake.h"
+#include "cs251_os.h"
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
+// extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
+
+void thread_fun(void* arg)
+{
+    while(1);
+}
 
 volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
 int main() {
@@ -9,6 +16,11 @@ int main() {
     int b = 12;
     int last_global = 42;
     int x_pos = 12;
+    cs251::ThreadScheduler scheduler;
+    void* p;
+    scheduler.create(thread_fun, nullptr);
+    scheduler.yield();
+
 
     Snake snake;
     for(size_t i = 0; i < snake.size(); i++)
@@ -44,6 +56,8 @@ int main() {
             }
             VIDEO_MEMORY[snake.newHeadCoord()] = '#';
             VIDEO_MEMORY[snake.foodCoord()] = '*';
+            // scheduler.yield();
+            // VIDEO_MEMORY[0] = '0' + (scheduler.runningThreadID() % 10);
             last_global = global;
         }
     }

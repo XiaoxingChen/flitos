@@ -17,8 +17,8 @@ MEMORY
 
 }
 
-STACK_SIZE          = 2M;
-HEAP_SIZE          = 2M;
+STACK_SIZE          = 4M;
+HEAP_SIZE          = 4M;
 
 ENTRY(_start)
 SEARCH_DIR("/opt/riscv32/riscv32-unknown-elf/lib");
