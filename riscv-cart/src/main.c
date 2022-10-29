@@ -50,10 +50,8 @@ int main() {
     writeTarget = (FuncWriteTarget)hookFunction(2);
 
     char video_cnt_str[]= "video interrupt:";
-    char cmd_cnt_str[]= "CMD interrupt:";
     char timer_cnt_str[]= "timer interrupt:";
     memcpy((void*)&VIDEO_MEMORY[0x40*0], video_cnt_str, sizeof(video_cnt_str));
-    memcpy((void*)&VIDEO_MEMORY[0x40*1], cmd_cnt_str, sizeof(cmd_cnt_str));
     memcpy((void*)&VIDEO_MEMORY[0x40*2], timer_cnt_str, sizeof(timer_cnt_str));
 
     initVideoSetting();
@@ -63,13 +61,7 @@ int main() {
 
     while (1) {
         global = getTicks();
-        if(global != last_global){
-            VIDEO_MEMORY[17] = '0' + (getVideoInterruptSeq() % 10);
-            
-            int cmdSeq = getCmdInterruptSeq();
-            VIDEO_MEMORY[15 +  + 0x40] = '0' + cmdSeq % 10;
-            
-            setDisplayMode(cmdSeq ^ 1);
+        if(global != last_global){      
             controller_status = getStatus();
             if(controller_status){
                 VIDEO_MEMORY[x_pos] = ' ';

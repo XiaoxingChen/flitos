@@ -40,6 +40,7 @@ __attribute__((always_inline)) inline void csr_disable_interrupts(void) {
 #define MTIMECMP_LOW    (*((volatile uint32_t *)0x40000010))
 #define MTIMECMP_HIGH   (*((volatile uint32_t *)0x40000014))
 #define CONTROLLER      (*((volatile uint32_t *)0x40000018))
+#define VIDEO_MODE      (*((volatile uint32_t *)0x500FF414))
 
 void init(void) {
     uint8_t *Source = _erodata;
@@ -88,13 +89,14 @@ void c_interrupt_handler(uint32_t mcause) {
 
     if((INTRPT_PENDING & 0x2) > 0)
     {
-        INTRPT_PENDING &= 0x2;
+        INTRPT_PENDING &= 0x2; 
         vip_seq++;
+        VIDEO_MEMORY[17] = '0' + vip_seq % 10;
     }
     if((INTRPT_PENDING & 0x4) > 0)
     {
         INTRPT_PENDING &= 0x4;
-        cmd_seq++;
+        VIDEO_MODE ^= 1;
     }
 }
 
