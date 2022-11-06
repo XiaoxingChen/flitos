@@ -55,6 +55,14 @@ SECTIONS
         _erodata = .;
     } > FLASH
 
+    /* . = ALIGN(4);
+    .init_array :
+    {
+        __init_array_start = .;
+        KEEP (*(.init_array*))
+        __init_array_end = .;
+    } > FLASH */
+
     /* data, initialized variables, to be copied to RAM after reset */
     .data :
     {

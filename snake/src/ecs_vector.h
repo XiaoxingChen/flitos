@@ -1,3 +1,11 @@
+/**
+******************************************************************************
+* @file    ecs_vector.h
+* @author  Chenxx
+* @version V1.0
+* @date    2022-11-05
+* @brief   simple vector implementation.
+******************************************************************************/
 #if !defined(__ECS_VECTOR_H__)
 #define __ECS_VECTOR_H__
 

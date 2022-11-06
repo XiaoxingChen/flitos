@@ -1,5 +1,5 @@
 .section .text, "ax"
-.global _interrupt_handler, context_switch
+.global _interrupt_handler, context_switch, startFirstTask
 _interrupt_handler:
     addi	sp,sp,-40
     sw	    ra,36(sp)
@@ -43,6 +43,24 @@ context_switch:
     sw      a5,0(sp)
     sw      sp,0(a0)
     mv      sp,a1
+    lw      ra,48(sp)
+    lw      tp,44(sp)
+    lw      t0,40(sp)
+    lw      t1,36(sp)
+    lw      t2,32(sp)
+    lw      s0,28(sp)
+    lw      s1,24(sp)
+    lw      a0,20(sp)
+    lw      a1,16(sp)
+    lw      a2,12(sp)
+    lw      a3,8(sp)
+    lw      a4,4(sp)
+    lw      a5,0(sp)
+    addi    sp,sp,52
+    ret
+
+startFirstTask:
+    mv      sp,a0
     lw      ra,48(sp)
     lw      tp,44(sp)
     lw      t0,40(sp)

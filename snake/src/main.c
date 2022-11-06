@@ -1,6 +1,8 @@
 #include <stdint.h>
-#include "snake.h"
+#include <stdlib.h>
+// #include "snake.h"
 #include "cs251_os.h"
+#include <stddef.h>
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
 // extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
@@ -11,54 +13,71 @@ void thread_fun(void* arg)
 }
 
 volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
-int main() {
-    int a = 4;
-    int b = 12;
-    int last_global = 42;
-    int x_pos = 12;
-    cs251::ThreadScheduler scheduler;
-    void* p;
-    scheduler.create(thread_fun, nullptr);
-    scheduler.yield();
 
-
-    Snake snake;
-    for(size_t i = 0; i < snake.size(); i++)
+void idleThread(void* param)
+{
+    int cnt = 0;
+    for(int i = 0; i < 1000;)
     {
-        VIDEO_MEMORY[snake.bodyCoord1D(i)] = '#';
+        VIDEO_MEMORY[20] = '0' + cnt++ % 10;
     }
+}
 
-    std::array<int16_t, 2> cmd_dir;
+void idleThread1(uint32_t offset)
+{
+    int cnt = 0;
+    for(int i = 0; i < 1000;)
+    {
+        VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
+    }
+}
+
+// #define IDLE_THREAD_STK_SIZE (0x1000)
+// #define SIZE_OF_POPAD (13)
+// uint8_t idleThreadStack[IDLE_THREAD_STK_SIZE];
+
+extern "C" void startFirstTask( uint32_t stk_ptr );
+#if 0
+void initForIdleThread()
+{
+    uint32_t* stack_ptr_ = (uint32_t*)(idleThreadStack + IDLE_THREAD_STK_SIZE) - 1;    
+    stack_ptr_ -= SIZE_OF_POPAD;
+    *(stack_ptr_ + 12) = (uint32_t)&idleThread; // ra
+    *(stack_ptr_ + 5) = 5; // a0
+    startFirstTask((uint32_t)stack_ptr_);
+}
+#endif
+
+// cs251::ThreadScheduler scheduler;
+// ecs::map<int, int> a;
+void* p_scheduler = nullptr;
+cs251::ThreadScheduler& scheduler()
+{
+    return *((cs251::ThreadScheduler*)p_scheduler);
+}
+int main() {
+    int last_global = 42;
+    ecs::list<int> test_list;
+    
+    // memset(idleThreadStack, 0, IDLE_THREAD_STK_SIZE);
+    // for(int i = 0; i < IDLE_THREAD_STK_SIZE; i++)
+    // {
+    //     idleThreadStack[i] = i & 0xff;
+    // }
+    // initForIdleThread();
+    cs251::ThreadScheduler scheduler;
+    p_scheduler = (void*)&scheduler;
+
+    // scheduler.clearFinishedList();
+    scheduler.create(idleThread, 0);
+    
+    scheduler.launchFirstTask();
+
     while (1) {
-        int c = a + b + global;
         if(global != last_global){
-            if(controller_status){
-                if(controller_status & 0x1){
-                    cmd_dir = std::array<int16_t, 2>{0,-1};
-                }
-                if(controller_status & 0x2){
-                    cmd_dir = std::array<int16_t, 2>{-1,0};
-                }
-                if(controller_status & 0x4){
-                    cmd_dir = std::array<int16_t, 2>{1,0};
-                }
-                if(controller_status & 0x8){
-                    cmd_dir = std::array<int16_t, 2>{0,1};
-                }
-            }
-            snake.updatePhysics(cmd_dir);
-            cmd_dir = std::array<int16_t, 2>{0,0};
-            // StaticVector<uint16_t, 20> to_erase = snake.offsetsToErase();
-            ecs::vector<uint16_t> to_erase = snake.offsetsToErase();
-            for(size_t i = 0; i < to_erase.size(); i++)
-            {
-                VIDEO_MEMORY[to_erase.at(i)] = ' ';
-            }
-            VIDEO_MEMORY[snake.newHeadCoord()] = '#';
-            VIDEO_MEMORY[snake.foodCoord()] = '*';
-            // scheduler.yield();
-            // VIDEO_MEMORY[0] = '0' + (scheduler.runningThreadID() % 10);
+            VIDEO_MEMORY[0x40 * 3] = '0' + global % 10;
             last_global = global;
+            test_list.push_back((int)global);
         }
     }
     return 0;

@@ -3,12 +3,13 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <list>
-#include <map>
+#include "ecs_list.h"
+#include "ecs_map.h"
 
 extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
 extern "C" void disable_interrupts();
 extern "C" void enable_interrupts();
+extern "C" void startFirstTask( uint32_t stk_ptr );
 
 
 namespace cs251
@@ -22,8 +23,8 @@ enum ThreadState
     eFINISHED
 };
 
-constexpr size_t SIZE_OF_POPAD = 52;
-constexpr size_t INITIAL_STACK_SIZE = 0x100000;
+constexpr size_t SIZE_OF_POPAD = 13;
+constexpr size_t INITIAL_STACK_SIZE = 0x1000;
 using thread_id_t = int;
 
 class ThreadControlBlock;
@@ -44,9 +45,8 @@ public:
     void pushDummySwitchFrame()
     {
         if(!stack_ptr_) return;
-        *stack_ptr_ = reinterpret_cast<size_t>(stub_wrapper);
-        stack_ptr_--;
         stack_ptr_ -= SIZE_OF_POPAD;
+        *(stack_ptr_ + 12) = reinterpret_cast<size_t>(stub_wrapper);
     }
 
     void init(void (*f)(void*), void* arg)
@@ -54,14 +54,12 @@ public:
         // thread_id_ = threadCounter();
         stk_size_ = INITIAL_STACK_SIZE;
         stk_mem_ = (uint8_t*)malloc(INITIAL_STACK_SIZE);
-        stack_ptr_ = reinterpret_cast<size_t*>(stk_mem_ + INITIAL_STACK_SIZE); //todo
+        stack_ptr_ = reinterpret_cast<size_t*>(stk_mem_ + INITIAL_STACK_SIZE) - 1; //todo
         program_counter_ = reinterpret_cast<void*>(stub_wrapper);
 
-        *stack_ptr_ = reinterpret_cast<size_t>(arg);
-        stack_ptr_--;
-        *stack_ptr_ = reinterpret_cast<size_t>(f);
-        stack_ptr_--;
         pushDummySwitchFrame();
+        *(stack_ptr_ + 4) = reinterpret_cast<size_t>(arg);
+        *(stack_ptr_ + 5) = reinterpret_cast<size_t>(f);
         state_ = ThreadState::eREADY;
     }
 
@@ -111,6 +109,17 @@ public:
         id_tcb_map_[id].init(f, arg);
         ready_list_.push_back(id);
         return id;
+    }
+
+    void launchFirstTask()
+    {
+        if(ready_list_.empty()) return; // idle thread should always be in ready_list?
+        thread_id_t chosen_id = ready_list_.front();
+        ready_list_.pop_front();
+
+        id_tcb_map_[chosen_id].setState(ThreadState::eRUNNING);
+        running_thread_id_ = chosen_id;
+        startFirstTask((uint32_t) (id_tcb_map_[chosen_id].sp()));
     }
 
     void yield()
@@ -170,10 +179,10 @@ public:
 private:
     thread_id_t running_thread_id_ = 0;
     size_t thread_counter_ = 0;
-    std::list<thread_id_t> ready_list_;
-    std::list<thread_id_t> waiting_list_;
-    std::list<thread_id_t> finished_list_;
-    std::map<thread_id_t, ThreadControlBlock> id_tcb_map_;
+    ecs::list<thread_id_t> ready_list_;
+    ecs::list<thread_id_t> waiting_list_;
+    ecs::list<thread_id_t> finished_list_;
+    ecs::map<thread_id_t, ThreadControlBlock> id_tcb_map_;
 };
 
 void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb)
