@@ -29,7 +29,7 @@ using thread_id_t = int;
 
 class ThreadControlBlock;
 void stub_wrapper(void (*f)(void*), void* arg);
-void thread_switch(const ThreadControlBlock& curr_tcb, const ThreadControlBlock& next_tcb){}
+void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb);
 
 
 class ThreadControlBlock
@@ -124,6 +124,7 @@ public:
 
     void yield()
     {
+        // disable_interrupts();
         popWaitingList();
         if(ready_list_.empty()) return; // idle thread should always be in ready_list?
         thread_id_t chosen_id = ready_list_.front();
@@ -132,11 +133,15 @@ public:
         id_tcb_map_[running_thread_id_].setState(ThreadState::eREADY);
         id_tcb_map_[chosen_id].setState(ThreadState::eRUNNING);
         
-        thread_switch(id_tcb_map_[running_thread_id_], id_tcb_map_[chosen_id]);
-        running_thread_id_ = chosen_id;
         ready_list_.push_back(running_thread_id_);
+        thread_id_t prev_id = running_thread_id_;
+        running_thread_id_ = chosen_id;
+        thread_switch(id_tcb_map_[prev_id], id_tcb_map_[running_thread_id_]);
+        
+        // context_switch(&id_tcb_map_[running_thread_id_].sp(), id_tcb_map_[chosen_id].sp());
 
         clearFinishedList();
+        // enable_interrupts();
     }
 
     void popWaitingList()
@@ -187,7 +192,18 @@ private:
 
 void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb)
 {
-    ::context_switch(const_cast<volatile size_t**>(&curr_tcb.sp()), next_tcb.sp());
+    context_switch(const_cast<volatile size_t**>(&curr_tcb.sp()), next_tcb.sp());
+}
+
+extern void* g_scheduler_;
+
+ThreadScheduler& schedulerInstance()
+{
+    if(g_scheduler_ == nullptr)
+    {
+        g_scheduler_ = reinterpret_cast<void*>(new ThreadScheduler());
+    }
+    return *((cs251::ThreadScheduler*)g_scheduler_);
 }
 
 
@@ -211,7 +227,7 @@ int thread_create(void (*f)(void), void* arg)
 int thread_yield()
 {
     disable_interrupts();
-
+    schedulerInstance().yield();
     enable_interrupts();
     return 0;
 } 

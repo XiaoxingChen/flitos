@@ -16,19 +16,12 @@ volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
 
 void idleThread(void* param)
 {
-    int cnt = 0;
-    for(int i = 0; i < 1000;)
-    {
-        VIDEO_MEMORY[20] = '0' + cnt++ % 10;
-    }
-}
-
-void idleThread1(uint32_t offset)
-{
+    uint32_t offset = *(uint32_t*)param;
     int cnt = 0;
     for(int i = 0; i < 1000;)
     {
         VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
+        cs251::thread_yield();
     }
 }
 
@@ -48,16 +41,14 @@ void initForIdleThread()
 }
 #endif
 
-// cs251::ThreadScheduler scheduler;
-// ecs::map<int, int> a;
-void* p_scheduler = nullptr;
-cs251::ThreadScheduler& scheduler()
+namespace cs251
 {
-    return *((cs251::ThreadScheduler*)p_scheduler);
-}
+    void* g_scheduler_ = nullptr;
+} // namespace cs251
+// ecs::map<int, int> a;
+
 int main() {
     int last_global = 42;
-    ecs::list<int> test_list;
     
     // memset(idleThreadStack, 0, IDLE_THREAD_STK_SIZE);
     // for(int i = 0; i < IDLE_THREAD_STK_SIZE; i++)
@@ -65,20 +56,16 @@ int main() {
     //     idleThreadStack[i] = i & 0xff;
     // }
     // initForIdleThread();
-    cs251::ThreadScheduler scheduler;
-    p_scheduler = (void*)&scheduler;
+    uint32_t display_offsets[] = {5,6,7};
 
     // scheduler.clearFinishedList();
-    scheduler.create(idleThread, 0);
+    cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
+    cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
+    cs251::schedulerInstance().create(idleThread, &display_offsets[2]);
     
-    scheduler.launchFirstTask();
+    cs251::schedulerInstance().launchFirstTask();
 
-    while (1) {
-        if(global != last_global){
-            VIDEO_MEMORY[0x40 * 3] = '0' + global % 10;
-            last_global = global;
-            test_list.push_back((int)global);
-        }
-    }
+    while (1) ;
+    
     return 0;
 }
