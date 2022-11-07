@@ -19,7 +19,6 @@ private:
     template<typename U>
     struct Node
     {
-        using TValue = U;
         Node(const U& val_in): val(val_in) {}
         Node() = default;
         U val;
@@ -70,6 +69,8 @@ private:
             return p_ == rhs.p_ && reach_end_ == rhs.reach_end_; 
         }
         bool operator != ( const Iterator_<TNode>& rhs ) const { return ! (*this == rhs); }
+        
+        // https://stackoverflow.com/questions/57718018/how-do-i-convert-iterator-to-const-iterator-in-my-custom-list-iterator-class/57718423#57718423
         auto & operator * () { return p_->val; }
         auto * operator -> () { return &p_->val; }
 
@@ -83,7 +84,7 @@ private:
         bool reach_end_ = true;
     };
 
-public:
+    public:
     using const_iterator = Iterator_<const Node<T>>;
     using iterator = Iterator_<Node<T>>;
 
@@ -179,8 +180,8 @@ public:
     {
         iterator ret = it;
         ret++;
-        it.p_->prev->next = ret.p_;
-        ret.p_->prev = it.p_->prev;
+        if(it.p_->prev) it.p_->prev->next = it.p_->next;
+        if(it.p_->next) it.p_->next->prev = it.p_->prev;
         delete it.p_;
         it.p_ = nullptr;
         return ret;

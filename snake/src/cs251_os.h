@@ -26,10 +26,13 @@ enum ThreadState
 constexpr size_t SIZE_OF_POPAD = 13;
 constexpr size_t INITIAL_STACK_SIZE = 0x1000;
 using thread_id_t = int;
+using mutex_id_t = int;
 
 class ThreadControlBlock;
+class ThreadScheduler;
 void stub_wrapper(void (*f)(void*), void* arg);
 void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb);
+inline ThreadScheduler& schedulerInstance();
 
 
 class ThreadControlBlock
@@ -174,21 +177,6 @@ public:
         }
     }
 
-    void popWaitingList()
-    {
-        for(auto it = waiting_list_.begin(); it != waiting_list_.end();)
-        {
-            thread_id_t id = *it;
-            if(id_tcb_map_[id].state() != ThreadState::eREADY) 
-            {
-                it++;
-                continue;
-            }
-            // state == ready
-            it = waiting_list_.erase(it);
-            ready_list_.push_back(id);
-        }
-    }
 
     void exit()
     {
@@ -202,10 +190,111 @@ private:
     thread_id_t running_thread_id_ = 0;
     size_t thread_counter_ = 0;
     ecs::list<thread_id_t> ready_list_;
-    ecs::list<thread_id_t> waiting_list_;
+    // ecs::list<thread_id_t> waiting_list_;
     ecs::list<thread_id_t> finished_list_;
     ecs::map<thread_id_t, ThreadControlBlock> id_tcb_map_;
 };
+
+class MutexInternal
+{
+public:
+    MutexInternal() {  }
+    bool try_lock()
+    {
+        bool ret = true;
+        disable_interrupts();
+        if(isLocked())
+        {
+            ret = false;
+        }else
+        {
+            owner_ = schedulerInstance().runningThreadID();
+            ret = true;
+        }
+        enable_interrupts();
+        return ret;
+    }
+
+    void lock()
+    {
+        disable_interrupts();
+        if(isLocked())
+        {
+            if(schedulerInstance().runningThreadID() == owner_)
+            {
+                // lock twice
+                // deal lock would occur
+            }else
+            {
+                waiting_list_.push_back(schedulerInstance().runningThreadID());
+                schedulerInstance().suspend();
+            }
+            
+        }else
+        {
+            owner_ = schedulerInstance().runningThreadID();
+        }
+        enable_interrupts();
+    }
+
+    void unlock()
+    {
+        disable_interrupts();
+        if(waiting_list_.empty())
+        {
+            if(schedulerInstance().runningThreadID() == owner_)
+            {
+                owner_ = -1;
+            }else
+            {
+                // undefined behavior
+            }
+            
+        }else
+        {
+            owner_ = waiting_list_.front();
+            waiting_list_.pop_front();
+            schedulerInstance().resume(owner_);
+        }
+        enable_interrupts();
+    }
+private:
+    bool isLocked() { return owner_ >= 0; }
+
+private:
+    thread_id_t owner_ = -1;
+    ecs::list<thread_id_t> waiting_list_;
+};
+
+class MutexFactory
+{
+public:
+    mutex_id_t create() 
+    {  
+        seq_id_++;
+        mtx_map_[seq_id_] = MutexInternal();
+        return seq_id_;
+    }
+    void destroy(mutex_id_t mtx_id)
+    {
+        mtx_map_.erase(mtx_id);
+    }
+    void lock(mutex_id_t id) { mtx_map_[id].lock(); }
+    void try_lock(mutex_id_t id) { mtx_map_[id].try_lock(); }
+    void unlock(mutex_id_t id) { mtx_map_[id].unlock(); }
+private:
+    mutex_id_t seq_id_ = 0;
+    ecs::map<mutex_id_t, MutexInternal> mtx_map_; 
+};
+
+extern void* g_mutex_factory;
+
+MutexFactory& mutexFactoryInstance()
+{
+    if(g_mutex_factory == nullptr)
+        g_mutex_factory = (void*) new MutexFactory();
+    return *(MutexFactory*)g_mutex_factory;
+}
 
 inline void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb)
 {
