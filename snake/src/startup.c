@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "utils.h"
+#include "cs251_os.h"
 
 extern uint8_t _erodata[];
 extern uint8_t _data[];
@@ -71,6 +72,7 @@ void c_interrupt_handler(void){
     MTIMECMP_LOW = NewCompare;
     global++;
     controller_status = CONTROLLER;
+    cs251::thread_yield();
 }
 #ifdef __cplusplus
 }

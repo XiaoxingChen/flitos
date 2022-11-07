@@ -21,7 +21,7 @@ void idleThread(void* param)
     for(int i = 0; i < 1000;)
     {
         VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
-        cs251::thread_yield();
+        // cs251::thread_yield();
     }
 }
 
@@ -56,7 +56,7 @@ int main() {
     //     idleThreadStack[i] = i & 0xff;
     // }
     // initForIdleThread();
-    uint32_t display_offsets[] = {5,6,7};
+    uint32_t display_offsets[] = {0x40+0,0x40+1,0x40+2};
 
     // scheduler.clearFinishedList();
     cs251::schedulerInstance().create(idleThread, &display_offsets[0]);

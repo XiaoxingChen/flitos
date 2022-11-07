@@ -190,14 +190,14 @@ private:
     ecs::map<thread_id_t, ThreadControlBlock> id_tcb_map_;
 };
 
-void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb)
+inline void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb)
 {
     context_switch(const_cast<volatile size_t**>(&curr_tcb.sp()), next_tcb.sp());
 }
 
 extern void* g_scheduler_;
 
-ThreadScheduler& schedulerInstance()
+inline ThreadScheduler& schedulerInstance()
 {
     if(g_scheduler_ == nullptr)
     {
@@ -207,24 +207,24 @@ ThreadScheduler& schedulerInstance()
 }
 
 
-int thread_exit()
+inline int thread_exit()
 {
     return 0;
 } 
 
-void stub_wrapper(void (*f)(void*), void* arg)
+inline void stub_wrapper(void (*f)(void*), void* arg)
 {
     (*f)(arg);
     thread_exit();
 }
 
 // 4.6.1 Creating a Thread
-int thread_create(void (*f)(void), void* arg)
+inline int thread_create(void (*f)(void), void* arg)
 {
     return 0;
 } 
 
-int thread_yield()
+inline int thread_yield()
 {
     schedulerInstance().yield();
     return 0;
