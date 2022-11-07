@@ -86,6 +86,15 @@ public:
     { 
         return insert(PairType(key, TValue())).first->second;
     }
+#if 1
+    size_t count(const TKey& key) const 
+    {
+        typename list<PairType>::const_iterator it = find_if(storage_.begin(), storage_.end(), 
+            [&key](const PairType& kv) { return kv.first >= key; });
+        if(it == storage_.end() || it->first > key) return 0;
+        return 1; /* it.first == key */
+    }
+#endif
 private:
     list<PairType> storage_;
 };

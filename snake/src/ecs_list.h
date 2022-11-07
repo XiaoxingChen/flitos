@@ -19,6 +19,7 @@ private:
     template<typename U>
     struct Node
     {
+        using TValue = U;
         Node(const U& val_in): val(val_in) {}
         Node() = default;
         U val;
@@ -26,13 +27,12 @@ private:
         Node* next = nullptr;
     };
 
-
-    template<typename U>
+    template<typename TNode>
     class Iterator_
     {
-    friend class list<U>;
+    template<typename TValue> friend class list;
     public:
-        Iterator_<U>& operator++(int) 
+        Iterator_<TNode>& operator++(int) 
         { 
             do{
                 if(!p_) break;
@@ -47,7 +47,7 @@ private:
             }while(0);
             return *this;
         }
-        Iterator_<U>& operator--(int) 
+        Iterator_<TNode>& operator--(int) 
         { 
             do
             {
@@ -64,28 +64,28 @@ private:
             } while (0);
             return *this;
         }
-        bool operator == ( const Iterator_<U>& rhs ) const 
+        bool operator == ( const Iterator_<TNode>& rhs ) const 
         { 
             if(p_ == nullptr && rhs.p_ == nullptr) return true;
             return p_ == rhs.p_ && reach_end_ == rhs.reach_end_; 
         }
-        bool operator != ( const Iterator_<U>& rhs ) const { return ! (*this == rhs); }
-        U& operator * () { return p_->val; }
-        U* operator -> () { return &p_->val; }
+        bool operator != ( const Iterator_<TNode>& rhs ) const { return ! (*this == rhs); }
+        auto & operator * () { return p_->val; }
+        auto * operator -> () { return &p_->val; }
 
         Iterator_() = default;
-        Iterator_(const Iterator_<U>& rhs): p_(rhs.p_), reach_end_(rhs.reach_end_) { }
-        Iterator_(Node<U>* rhs): p_(rhs), reach_end_(false) {}
+        Iterator_(const Iterator_<TNode>& rhs): p_(rhs.p_), reach_end_(rhs.reach_end_) { }
+        Iterator_(TNode* rhs): p_(rhs), reach_end_(false) {}
 
-        void operator = (const Iterator_<U>& rhs) { p_ = rhs.p_; }
+        void operator = (const Iterator_<TNode>& rhs) { p_ = rhs.p_; }
     private:
-        Node<U>* p_ = nullptr;
+        TNode* p_ = nullptr;
         bool reach_end_ = true;
     };
 
 public:
-    using const_iterator = Iterator_<const T>;
-    using iterator = Iterator_<T>;
+    using const_iterator = Iterator_<const Node<T>>;
+    using iterator = Iterator_<Node<T>>;
 
 public:
     void push_back(const T& val)

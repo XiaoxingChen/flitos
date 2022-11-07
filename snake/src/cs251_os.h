@@ -152,6 +152,20 @@ public:
         switchCurrentThreadTo(ThreadState::eREADY);
     }
 
+    void suspend()
+    {
+        switchCurrentThreadTo(ThreadState::eWAITING);
+    }
+
+    void resume( thread_id_t tid )
+    {
+        if(id_tcb_map_.count(tid) > 0)
+        {
+            id_tcb_map_[tid].setState(ThreadState::eREADY);
+            ready_list_.push_back(tid);
+        }
+    }
+
     void popWaitingList()
     {
         for(auto it = waiting_list_.begin(); it != waiting_list_.end();)
