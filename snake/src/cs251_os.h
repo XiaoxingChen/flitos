@@ -129,6 +129,13 @@ public:
         && state != ThreadState::eFINISHED) return;
         
         if(ready_list_.empty()) return; // running thread is idel spin thread
+
+        // Voluntary context switch and 
+        // involuntary context switch 
+        // could generate race condition.
+        // Therefore disable interrupts here.
+        disable_interrupts();
+
         thread_id_t prev_thread_id = running_thread_id_;
         running_thread_id_ = ready_list_.front();
         ready_list_.pop_front();
@@ -145,6 +152,7 @@ public:
         }
         
         thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
+        enable_interrupts();
     }
 
     void yield()

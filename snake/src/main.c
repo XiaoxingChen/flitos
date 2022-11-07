@@ -68,12 +68,13 @@ int main() {
     //     idleThreadStack[i] = i & 0xff;
     // }
     // initForIdleThread();
-    uint32_t display_offsets[] = {0x40+0,0x40+1,0x40+2};
+    uint32_t display_offsets[] = {0x40+0,0x40+1,0x40+2,0x40+3};
 
     // scheduler.clearFinishedList();
     cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
-    cs251::schedulerInstance().create(naiveThread, &display_offsets[1]);
+    cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     cs251::schedulerInstance().create(naiveThread, &display_offsets[2]);
+    cs251::schedulerInstance().create(naiveThread, &display_offsets[3]);
     
     cs251::schedulerInstance().launchFirstTask();
 

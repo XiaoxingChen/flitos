@@ -27,7 +27,7 @@ _interrupt_handler:
     mret
 
 context_switch:
-    csrci   mstatus, 0x8 /* disable interrupt */
+    ; csrci   mstatus, 0x8 /* disable interrupt */
     addi    sp,sp,-52
     sw      ra,48(sp)
     sw      tp,44(sp)
@@ -58,7 +58,7 @@ context_switch:
     lw      a4,4(sp)
     lw      a5,0(sp)
     addi    sp,sp,52
-    csrsi   mstatus, 0x8 /* enable interrupt */
+    ; csrsi   mstatus, 0x8 /* enable interrupt */
     ret
 
 startFirstTask:
