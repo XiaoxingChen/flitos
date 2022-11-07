@@ -226,9 +226,7 @@ int thread_create(void (*f)(void), void* arg)
 
 int thread_yield()
 {
-    disable_interrupts();
     schedulerInstance().yield();
-    enable_interrupts();
     return 0;
 } 
 
