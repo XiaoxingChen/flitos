@@ -21,8 +21,20 @@ void idleThread(void* param)
     for(int i = 0; i < 1000;)
     {
         VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
+        cs251::thread_yield();
+    }
+}
+
+void naiveThread(void* param)
+{
+    uint32_t offset = *(uint32_t*)param;
+    int cnt = 0;
+    for(int i = 0; i < 1000;i++)
+    {
+        VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
         // cs251::thread_yield();
     }
+    VIDEO_MEMORY[offset] = '#';
 }
 
 // #define IDLE_THREAD_STK_SIZE (0x1000)
@@ -60,8 +72,8 @@ int main() {
 
     // scheduler.clearFinishedList();
     cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
-    cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
-    cs251::schedulerInstance().create(idleThread, &display_offsets[2]);
+    cs251::schedulerInstance().create(naiveThread, &display_offsets[1]);
+    cs251::schedulerInstance().create(naiveThread, &display_offsets[2]);
     
     cs251::schedulerInstance().launchFirstTask();
 

@@ -122,26 +122,34 @@ public:
         startFirstTask((uint32_t) (id_tcb_map_[chosen_id].sp()));
     }
 
-    void yield()
+    void switchCurrentThreadTo(const ThreadState& state)
     {
-        // disable_interrupts();
-        popWaitingList();
-        if(ready_list_.empty()) return; // idle thread should always be in ready_list?
-        thread_id_t chosen_id = ready_list_.front();
+        if(state != ThreadState::eREADY 
+        && state != ThreadState::eWAITING
+        && state != ThreadState::eFINISHED) return;
+        
+        if(ready_list_.empty()) return; // running thread is idel spin thread
+        thread_id_t prev_thread_id = running_thread_id_;
+        running_thread_id_ = ready_list_.front();
         ready_list_.pop_front();
 
-        id_tcb_map_[running_thread_id_].setState(ThreadState::eREADY);
-        id_tcb_map_[chosen_id].setState(ThreadState::eRUNNING);
-        
-        ready_list_.push_back(running_thread_id_);
-        thread_id_t prev_id = running_thread_id_;
-        running_thread_id_ = chosen_id;
-        thread_switch(id_tcb_map_[prev_id], id_tcb_map_[running_thread_id_]);
-        
-        // context_switch(&id_tcb_map_[running_thread_id_].sp(), id_tcb_map_[chosen_id].sp());
+        id_tcb_map_[prev_thread_id].setState(state);
+        id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
 
-        clearFinishedList();
-        // enable_interrupts();
+        if(state == ThreadState::eREADY)
+        {
+            ready_list_.push_back(prev_thread_id);
+        }else if (state == ThreadState::eFINISHED)
+        {
+            finished_list_.push_back(prev_thread_id);
+        }
+        
+        thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
+    }
+
+    void yield()
+    {
+        switchCurrentThreadTo(ThreadState::eREADY);
     }
 
     void popWaitingList()
@@ -162,20 +170,7 @@ public:
 
     void exit()
     {
-        // still on the stack of finishing thread, do not destroy TCB.
-        while(ready_list_.empty())
-        {
-            popWaitingList();
-        }
-        thread_id_t chosen_id = ready_list_.front();
-        ready_list_.pop_front();
-        id_tcb_map_[running_thread_id_].setState(ThreadState::eFINISHED);
-        id_tcb_map_[chosen_id].setState(ThreadState::eRUNNING);
-
-        thread_switch(id_tcb_map_[running_thread_id_], id_tcb_map_[chosen_id]);
-
-        finished_list_.push_back(running_thread_id_);
-        running_thread_id_ = chosen_id;
+        switchCurrentThreadTo(ThreadState::eFINISHED);
     }
 
     thread_id_t runningThreadID() const { return running_thread_id_; }
@@ -209,6 +204,7 @@ inline ThreadScheduler& schedulerInstance()
 
 inline int thread_exit()
 {
+    schedulerInstance().exit();
     return 0;
 } 
 
