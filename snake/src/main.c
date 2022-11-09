@@ -61,13 +61,24 @@ void displayThread(void* args)
     int val = 0; 
     while(1)
     {
-        cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_handle);
-        val = *(p_mtx_cnt->p_counter);
-        cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_handle);
+        // cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_handle);
+        // val = *(p_mtx_cnt->p_counter);
+        // cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_handle);
         VIDEO_MEMORY[0x40 * 2 + 0] = '0' + (val / 1000) % 10;
         VIDEO_MEMORY[0x40 * 2 + 1] = '0' + (val / 100) % 10;
         VIDEO_MEMORY[0x40 * 2 + 2] = '0' + (val / 10) % 10;
         VIDEO_MEMORY[0x40 * 2 + 3] = '0' + (val / 1) % 10;
+        // VIDEO_MEMORY[0x40 * 2 + 5] = '0' + cs251::schedulerInstance().readyList().size();
+        VIDEO_MEMORY[0x40 * 0 + 1] = cs251::schedulerInstance().runningThreadID();
+        int i = 0;
+        for(i = 0; i < 0x40; i++) VIDEO_MEMORY[0x40 * 0 + 2 + i] = 0;
+        i = 0;
+        for(auto it = cs251::schedulerInstance().readyList().begin(); 
+        it != cs251::schedulerInstance().readyList().end(); 
+        it++, i++)
+        {
+            VIDEO_MEMORY[0x40 * 0 + 2 + i] = *it;
+        }
         cs251::thread_yield();
     }
 }

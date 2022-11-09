@@ -127,17 +127,17 @@ public:
 
     void switchCurrentThreadTo(const ThreadState& state)
     {
-        if(state != ThreadState::eREADY 
-        && state != ThreadState::eWAITING
-        && state != ThreadState::eFINISHED) return;
-        
-        if(ready_list_.empty()) return; // running thread is idel spin thread
-
         // Voluntary context switch and 
         // involuntary context switch 
         // could generate race condition.
         // Therefore disable interrupts here.
         disable_interrupts();
+        
+        if(state != ThreadState::eREADY 
+        && state != ThreadState::eWAITING
+        && state != ThreadState::eFINISHED) return;
+        
+        if(ready_list_.empty()) return; // running thread is idel spin thread
 
         thread_id_t prev_thread_id = running_thread_id_;
         running_thread_id_ = ready_list_.front();
@@ -185,7 +185,7 @@ public:
 
     thread_id_t runningThreadID() const { return running_thread_id_; }
 
-
+    const ecs::list<thread_id_t>& readyList() const { return ready_list_; }
 private:
     thread_id_t running_thread_id_ = 0;
     size_t thread_counter_ = 0;
@@ -289,7 +289,7 @@ private:
 
 extern void* g_mutex_factory;
 
-MutexFactory& mutexFactoryInstance()
+inline MutexFactory& mutexFactoryInstance()
 {
     if(g_mutex_factory == nullptr)
         g_mutex_factory = (void*) new MutexFactory();
