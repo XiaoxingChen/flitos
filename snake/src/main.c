@@ -14,6 +14,8 @@ void thread_fun(void* arg)
 
 volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
 
+// char VIDEO_MEMORY[0x40 * 30];
+
 void idleThread(void* param)
 {
     uint32_t offset = *(uint32_t*)param;
@@ -61,9 +63,9 @@ void displayThread(void* args)
     int val = 0; 
     while(1)
     {
-        // cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_handle);
-        // val = *(p_mtx_cnt->p_counter);
-        // cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_handle);
+        cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_handle);
+        val = *(p_mtx_cnt->p_counter);
+        cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_handle);
         VIDEO_MEMORY[0x40 * 2 + 0] = '0' + (val / 1000) % 10;
         VIDEO_MEMORY[0x40 * 2 + 1] = '0' + (val / 100) % 10;
         VIDEO_MEMORY[0x40 * 2 + 2] = '0' + (val / 10) % 10;
@@ -103,6 +105,8 @@ namespace cs251
 // ecs::map<int, int> a;
 
 int main() {
+    cs251::g_scheduler_ = nullptr;
+    cs251::g_mutex_factory = nullptr;
     int last_global = 42;
     
     // memset(idleThreadStack, 0, IDLE_THREAD_STK_SIZE);
@@ -117,8 +121,8 @@ int main() {
     MutexCount mtx_cnt;
     
     int cnt_var = 0;
-    // mtx_cnt.p_counter = &cnt_var;
-    mtx_cnt.p_counter = (int*)VIDEO_MEMORY;
+    mtx_cnt.p_counter = &cnt_var;
+    // mtx_cnt.p_counter = (int*)VIDEO_MEMORY;
     mtx_cnt.mtx_handle = cs251::mutexFactoryInstance().create();
 
     // scheduler.clearFinishedList();
