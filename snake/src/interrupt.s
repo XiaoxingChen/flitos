@@ -77,5 +77,5 @@ startFirstTask:
     lw      a4,4(sp)
     lw      a5,0(sp)
     addi    sp,sp,52
-    csrsi   mstatus, 0x8 /* enable interrupt */
+    /*csrsi   mstatus, 0x8*/ /* enable interrupt */
     ret

@@ -321,6 +321,7 @@ inline int thread_exit()
 
 inline void stub_wrapper(void (*f)(void*), void* arg)
 {
+    // enable_interrupts();
     (*f)(arg);
     thread_exit();
 }
