@@ -63,17 +63,48 @@ void init(void){
 #endif
 extern volatile int global;
 extern volatile uint32_t controller_status;
+
+inline uint64_t readMachineTime()
+{
+    uint64_t h1 = MTIME_HIGH;
+    uint64_t l1 = MTIME_LOW;
+    uint64_t h2 = MTIME_HIGH;
+    uint64_t l2 = MTIME_LOW;
+    if(h1 == h2) return ((h1 << 32) | l1);
+    return (h2 << 32) | l2;
+}
+
+void increaseTimeCompare(uint32_t val)
+{
+    uint64_t NewCompare = readMachineTime();
+    NewCompare += val;
+    MTIMECMP_HIGH = NewCompare>>32;
+    MTIMECMP_LOW = NewCompare;
+}
+
 #ifdef __cplusplus
 extern "C"{
 #endif
 void c_interrupt_handler(void){
+#if 0
     uint64_t NewCompare = (((uint64_t)MTIMECMP_HIGH)<<32) | MTIMECMP_LOW;
-    NewCompare += 100;
+    NewCompare += 5000;
+    MTIMECMP_HIGH = NewCompare>>32;
+    MTIMECMP_LOW = NewCompare;
+    global++;
+    controller_status = CONTROLLER;
+
+    uint64_t curr_timer = readMachineTime();
+    if(NewCompare > curr_timer)
+        cs251::thread_yield();
+#else
+    uint64_t NewCompare = readMachineTime() + 5000;
     MTIMECMP_HIGH = NewCompare>>32;
     MTIMECMP_LOW = NewCompare;
     global++;
     controller_status = CONTROLLER;
     cs251::thread_yield();
+#endif
 }
 #ifdef __cplusplus
 }

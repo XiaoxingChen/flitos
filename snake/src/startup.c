@@ -72,7 +72,10 @@ void c_interrupt_handler(void){
     MTIMECMP_LOW = NewCompare;
     global++;
     controller_status = CONTROLLER;
-    cs251::thread_yield();
+    
+    // uint64_t curr_timer = (((uint64_t)MTIME_HIGH << 32) | MTIME_LOW);
+    // if(NewCompare > curr_timer)
+    //     cs251::thread_yield();
 }
 #ifdef __cplusplus
 }

@@ -125,6 +125,7 @@ int main() {
     // mtx_cnt.p_counter = (int*)VIDEO_MEMORY;
     mtx_cnt.mtx_handle = cs251::mutexFactoryInstance().create();
 
+    disable_interrupts();
     // scheduler.clearFinishedList();
     cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
     cs251::schedulerInstance().create(idleThread, &display_offsets[1]);

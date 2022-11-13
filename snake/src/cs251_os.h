@@ -10,6 +10,7 @@ extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
 extern "C" void disable_interrupts();
 extern "C" void enable_interrupts();
 extern "C" void startFirstTask( uint32_t stk_ptr );
+void increaseTimeCompare(uint32_t val);
 
 
 namespace cs251
@@ -321,7 +322,8 @@ inline int thread_exit()
 
 inline void stub_wrapper(void (*f)(void*), void* arg)
 {
-    // enable_interrupts();
+    increaseTimeCompare(1000);
+    enable_interrupts();
     (*f)(arg);
     thread_exit();
 }

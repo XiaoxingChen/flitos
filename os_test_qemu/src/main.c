@@ -93,6 +93,7 @@ void initForIdleThread()
     startFirstTask((uint32_t)stack_ptr_);
 }
 #endif
+void increaseTimeCompare(uint32_t val);
 
 namespace cs251
 {
@@ -105,6 +106,7 @@ int cnt_var = 0;
 int finish_cnt = 0;
 
 int main() {
+    increaseTimeCompare(0);
     
     int last_global = 42;
     
@@ -133,7 +135,7 @@ int main() {
     // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     // cs251::schedulerInstance().create(displayThread, &mtx_cnt);
-    
+    increaseTimeCompare(1000);
     cs251::schedulerInstance().launchFirstTask();
 
     while (1) ;
