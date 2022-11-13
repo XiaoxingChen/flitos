@@ -86,24 +86,27 @@ void increaseTimeCompare(uint32_t val)
 extern "C"{
 #endif
 void c_interrupt_handler(void){
-#if 0
+
     uint64_t NewCompare = (((uint64_t)MTIMECMP_HIGH)<<32) | MTIMECMP_LOW;
     NewCompare += 5000;
     MTIMECMP_HIGH = NewCompare>>32;
     MTIMECMP_LOW = NewCompare;
     global++;
     controller_status = CONTROLLER;
-
+#if 0
     uint64_t curr_timer = readMachineTime();
     if(NewCompare > curr_timer)
-        cs251::thread_yield();
+        cs251::schedulerInstance().inInterruptYield();
 #else
-    uint64_t NewCompare = readMachineTime() + 5000;
-    MTIMECMP_HIGH = NewCompare>>32;
-    MTIMECMP_LOW = NewCompare;
-    global++;
-    controller_status = CONTROLLER;
-    cs251::thread_yield();
+
+    char * UART_MEMORY = (char*)(0x10000000);
+
+    if((UART_MEMORY[5] & 1) && UART_MEMORY[0] == 'a')
+    {
+        UART_MEMORY[0] = '#';
+        UART_MEMORY[0] = '\n';
+        cs251::schedulerInstance().inInterruptYield();
+    }
 #endif
 }
 #ifdef __cplusplus

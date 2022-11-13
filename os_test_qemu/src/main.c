@@ -15,6 +15,7 @@ void thread_fun(void* arg)
 // volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
 
 char VIDEO_MEMORY[0x40 * 30];
+char * UART_MEMORY = (char*)(0x10000000);
 
 void idleThread(void* param)
 {
@@ -117,6 +118,9 @@ int main() {
     // }
     // initForIdleThread();
     VIDEO_MEMORY[0x40 * 4] = '0';
+    char hello_str[] = "Hello world\n";
+    for(int i = 0; i < sizeof(hello_str); i++) UART_MEMORY[0] = hello_str[i];
+
     uint32_t display_offsets[] = {0x40+0,0x40+1,0x40+2,0x40+3};
 
     MutexCount mtx_cnt;

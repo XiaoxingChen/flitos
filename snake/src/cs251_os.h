@@ -159,6 +159,21 @@ public:
         enable_interrupts();
     }
 
+    void inInterruptYield()
+    {
+        if(ready_list_.empty()) return; // running thread is idel spin thread
+
+        thread_id_t prev_thread_id = running_thread_id_;
+        running_thread_id_ = ready_list_.front();
+        ready_list_.pop_front();
+
+        id_tcb_map_[prev_thread_id].setState(ThreadState::eREADY);
+        id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
+
+        ready_list_.push_back(prev_thread_id);
+        thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
+    }
+
     void yield()
     {
         switchCurrentThreadTo(ThreadState::eREADY);
@@ -322,7 +337,7 @@ inline int thread_exit()
 
 inline void stub_wrapper(void (*f)(void*), void* arg)
 {
-    increaseTimeCompare(1000);
+    // increaseTimeCompare(1000);
     enable_interrupts();
     (*f)(arg);
     thread_exit();
