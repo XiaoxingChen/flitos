@@ -86,16 +86,18 @@ void increaseTimeCompare(uint32_t val)
 extern "C"{
 #endif
 void c_interrupt_handler(void){
+    uint32_t timecmp_step = 5000;
+    uint64_t curr_timer = readMachineTime();
 
     uint64_t NewCompare = (((uint64_t)MTIMECMP_HIGH)<<32) | MTIMECMP_LOW;
-    NewCompare += 5000;
+    if (NewCompare < curr_timer)
+        NewCompare += 5000;
     MTIMECMP_HIGH = NewCompare>>32;
     MTIMECMP_LOW = NewCompare;
     global++;
     controller_status = CONTROLLER;
 #if 0
-    uint64_t curr_timer = readMachineTime();
-    if(NewCompare > curr_timer)
+    if(curr_timer < NewCompare && NewCompare < curr_timer + timecmp_step)
         cs251::schedulerInstance().inInterruptYield();
 #else
 
@@ -104,6 +106,7 @@ void c_interrupt_handler(void){
     if((UART_MEMORY[5] & 1) && UART_MEMORY[0] == 'a')
     {
         UART_MEMORY[0] = '#';
+        UART_MEMORY[0] = '0' + global % 10;
         UART_MEMORY[0] = '\n';
         cs251::schedulerInstance().inInterruptYield();
     }
