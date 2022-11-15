@@ -10,6 +10,7 @@ extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
 extern "C" void disable_interrupts();
 extern "C" void enable_interrupts();
 extern "C" void startFirstTask( uint32_t stk_ptr );
+extern "C" uint8_t __global_pointer$[];
 void increaseTimeCompare(uint32_t val);
 
 
@@ -24,7 +25,7 @@ enum ThreadState
     eFINISHED
 };
 
-constexpr size_t SIZE_OF_POPAD = 13;
+constexpr size_t SIZE_OF_POPAD = 14;
 constexpr size_t INITIAL_STACK_SIZE = 0x1000;
 using thread_id_t = int;
 using mutex_id_t = int;
@@ -50,7 +51,8 @@ public:
     {
         if(!stack_ptr_) return;
         stack_ptr_ -= SIZE_OF_POPAD;
-        *(stack_ptr_ + 12) = reinterpret_cast<size_t>(stub_wrapper);
+        *(stack_ptr_ + (SIZE_OF_POPAD - 1)) = reinterpret_cast<size_t>(stub_wrapper);
+        *(stack_ptr_ + (SIZE_OF_POPAD - 2)) = reinterpret_cast<size_t>(__global_pointer$);
     }
 
     void init(void (*f)(void*), void* arg)

@@ -28,8 +28,9 @@ _interrupt_handler:
 
 context_switch:
     /* csrci   mstatus, 0x8*/ /* disable interrupt */
-    addi    sp,sp,-52
-    sw      ra,48(sp)
+    addi    sp,sp,-56
+    sw      ra,52(sp)
+    sw      gp,48(sp)
     sw      tp,44(sp)
     sw      t0,40(sp)
     sw      t1,36(sp)
@@ -44,7 +45,8 @@ context_switch:
     sw      a5,0(sp)
     sw      sp,0(a0)
     mv      sp,a1
-    lw      ra,48(sp)
+    lw      ra,52(sp)
+    lw      gp,48(sp)
     lw      tp,44(sp)
     lw      t0,40(sp)
     lw      t1,36(sp)
@@ -57,13 +59,14 @@ context_switch:
     lw      a3,8(sp)
     lw      a4,4(sp)
     lw      a5,0(sp)
-    addi    sp,sp,52
+    addi    sp,sp,56
     /* csrsi   mstatus, 0x8*/ /* enable interrupt */
     ret
 
 startFirstTask:
     mv      sp,a0
-    lw      ra,48(sp)
+    lw      ra,52(sp)
+    lw      gp,48(sp)
     lw      tp,44(sp)
     lw      t0,40(sp)
     lw      t1,36(sp)
@@ -76,6 +79,6 @@ startFirstTask:
     lw      a3,8(sp)
     lw      a4,4(sp)
     lw      a5,0(sp)
-    addi    sp,sp,52
+    addi    sp,sp,56
     /*csrsi   mstatus, 0x8*/ /* enable interrupt */
     ret
