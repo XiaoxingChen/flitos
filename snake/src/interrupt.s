@@ -1,5 +1,5 @@
 .section .text, "ax"
-.global _interrupt_handler
+.global _interrupt_handler, context_switch, startFirstTask
 _interrupt_handler:
     addi	sp,sp,-40
     sw	    ra,36(sp)
@@ -26,9 +26,11 @@ _interrupt_handler:
     addi    sp,sp,40
     mret
 
-ContextSwitch:
-    addi    sp,sp,-52
-    sw      ra,48(sp)
+context_switch:
+    /* csrci   mstatus, 0x8*/ /* disable interrupt */
+    addi    sp,sp,-56
+    sw      ra,52(sp)
+    sw      gp,48(sp)
     sw      tp,44(sp)
     sw      t0,40(sp)
     sw      t1,36(sp)
@@ -43,7 +45,8 @@ ContextSwitch:
     sw      a5,0(sp)
     sw      sp,0(a0)
     mv      sp,a1
-    lw      ra,48(sp)
+    lw      ra,52(sp)
+    lw      gp,48(sp)
     lw      tp,44(sp)
     lw      t0,40(sp)
     lw      t1,36(sp)
@@ -56,5 +59,26 @@ ContextSwitch:
     lw      a3,8(sp)
     lw      a4,4(sp)
     lw      a5,0(sp)
-    addi    sp,sp,52
+    addi    sp,sp,56
+    /* csrsi   mstatus, 0x8*/ /* enable interrupt */
+    ret
+
+startFirstTask:
+    mv      sp,a0
+    lw      ra,52(sp)
+    lw      gp,48(sp)
+    lw      tp,44(sp)
+    lw      t0,40(sp)
+    lw      t1,36(sp)
+    lw      t2,32(sp)
+    lw      s0,28(sp)
+    lw      s1,24(sp)
+    lw      a0,20(sp)
+    lw      a1,16(sp)
+    lw      a2,12(sp)
+    lw      a3,8(sp)
+    lw      a4,4(sp)
+    lw      a5,0(sp)
+    addi    sp,sp,56
+    /*csrsi   mstatus, 0x8*/ /* enable interrupt */
     ret
