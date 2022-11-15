@@ -14,6 +14,9 @@ SRC_DIR = ./src
 OBJ_DIR = ./obj
 BIN_DIR = ./bin
 
+OS_DEMO_INC_DIR = ../snake/src
+OS_DEMO_SRC_DIR = ../snake/src
+
 DEBUG_MODE=TRUE
 
 ifdef DEBUG_MODE
@@ -25,9 +28,9 @@ CFLAGS   += -O3
 endif
 
 LDFILE   = riscv32-console.ld
-INCLUDE  += -I $(INC_DIR)
-CFLAGS   += -ffreestanding  -nostartfiles -nostdlib -nodefaultlibs
-LDFLAGS  += -lc -lnosys
+INCLUDE  += -I $(INC_DIR) -I $(OS_DEMO_INC_DIR)
+CFLAGS   += -ffreestanding  -nostartfiles -fno-exceptions
+LDFLAGS  += -lc -lnosys -lstdc++
 LDFLAGS  += -Wl,--gc-sections -Wl,-T,$(LDFILE)
 
 TARGET_NAME = riscv-console-firmware
@@ -35,10 +38,13 @@ TARGET_NAME = riscv-console-firmware
 TARGET_OBJS =   $(OBJ_DIR)/main.o               \
                 $(OBJ_DIR)/crt0.o               \
                 $(OBJ_DIR)/interrupt.o          \
+				$(OBJ_DIR)/context_switch.o          \
                 $(OBJ_DIR)/SList.o				\
                 $(OBJ_DIR)/timer.o				\
+				$(OBJ_DIR)/utils.o			\
 				$(OBJ_DIR)/printf.o				\
 				$(OBJ_DIR)/system_calls.o          \
+				$(OBJ_DIR)/new_delete_overloading.o               \
                 $(OBJ_DIR)/startup.o
 
 all: directories $(BIN_DIR)/$(TARGET_NAME)
@@ -51,6 +57,15 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/new_delete_overloading.o: $(OS_DEMO_SRC_DIR)/new_delete_overloading.c
+	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/utils.o: $(OS_DEMO_SRC_DIR)/utils.c
+	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/context_switch.o: $(OS_DEMO_SRC_DIR)/context_switch.s
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 	
 directories: $(OBJ_DIR) $(BIN_DIR)

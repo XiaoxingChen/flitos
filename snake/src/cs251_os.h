@@ -357,7 +357,10 @@ inline int thread_yield()
     return 0;
 } 
 
-
+#ifdef CS251_OS_STATIC_OBJECTS_ON
+void* g_scheduler_ = nullptr;
+void* g_mutex_factory = nullptr;
+#endif
 
 } // namespace cs251
 

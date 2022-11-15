@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#define CS251_OS_STATIC_OBJECTS_ON
+#include "cs251_os.h"
 
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
@@ -9,16 +11,37 @@ volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
 
 typedef void (*FunPtr)(void);
 volatile uint32_t cartridgeFlag=0;
-volatile uint32_t  counter3= 0;
 volatile int vip_seq = 1;
 volatile int cmd_seq = 0;
-int main() {
+
+void idleThread(void* param)
+{
+    int cnt = 0;
+    while(1)
+    {
+        VIDEO_MEMORY[0x40 * 6] = '0' + cnt++ % 10;
+        cs251::thread_yield();
+    }
+}
+
+void threadWaitingForCartridge(void* param)
+{
     while(1){
         if(((*CARTRIDGE) & 0x1) && cartridgeFlag==0){
-            counter3++;
             cartridgeFlag =1;
             ((FunPtr)((*CARTRIDGE) & 0xFFFFFFFC))();
         }
+        cs251::thread_yield();
     }
+}
+
+int main() {
+    disable_interrupts();
+    cs251::schedulerInstance().create(idleThread, nullptr);
+    cs251::schedulerInstance().create(threadWaitingForCartridge, nullptr);
+    cs251::schedulerInstance().launchFirstTask();
+
+    while(1);
+    
     return 0;
 }

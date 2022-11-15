@@ -38,6 +38,7 @@ TARGET_OBJS =   $(OBJ_DIR)/main.o               \
 				$(OBJ_DIR)/new_delete_overloading.o               \
                 $(OBJ_DIR)/crt0.o               \
                 $(OBJ_DIR)/interrupt.o          \
+				$(OBJ_DIR)/context_switch.o          \
                 $(OBJ_DIR)/startup.o			\
 				$(OBJ_DIR)/utils.o			\
 
@@ -51,6 +52,8 @@ $(BIN_DIR)/$(TARGET_NAME): $(TARGET_OBJS)
 $(OBJ_DIR)/crt0.o: $(OS_DEMO_SRC_DIR)/crt0.s
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 $(OBJ_DIR)/interrupt.o: $(OS_DEMO_SRC_DIR)/interrupt.s
+	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+$(OBJ_DIR)/context_switch.o: $(OS_DEMO_SRC_DIR)/context_switch.s
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
