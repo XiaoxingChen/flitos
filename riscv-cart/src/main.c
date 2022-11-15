@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "video_api.h"
+#include "thread_api.h"
 
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
@@ -33,6 +34,7 @@ uint32_t hookFunction(uint32_t func_id);
 FuncWriteTargetMem writeTargetMem;
 FuncWriteTarget writeTarget;
 
+void threadGraphics(void* param);
 
 int main() {
     registerHandler((uint32_t) myHandler);
@@ -56,13 +58,21 @@ int main() {
     memcpy((void*)&VIDEO_MEMORY[0x40*2], timer_cnt_str, sizeof(timer_cnt_str));
 
     initVideoSetting();
+    threadGraphics(NULL);
+    return 0;
+}
+
+void threadGraphics(void* param)
+{
+    int x_pos = 18;
     uint32_t sprite_x = 30;
     uint32_t sprite_y = 30;
     int move_speed = 5;
-
+    uint32_t time_counter = 0;
+    uint32_t last_time = 0;
     while (1) {
         global = getTicks();
-        if(global != last_global){
+        if(global != last_time){
             VIDEO_MEMORY[17] = '0' + (getVideoInterruptSeq() % 10);
             
             int cmdSeq = getCmdInterruptSeq();
@@ -103,12 +113,10 @@ int main() {
             {
                 setLargeSpriteControl(i, 64, 64, sprite_x, sprite_y, i == global % 3);
             }
-            last_global = global;
-        } //global != last_global
-
+            last_time = global;
+        } //global != last_time
+        // threadYield();
     } // while(1)
-
-    return 0;
 }
 
 
