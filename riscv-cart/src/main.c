@@ -49,8 +49,9 @@ int main() {
 
     initVideoSetting();
     threadCreate(idleThread, NULL);
-    // while(1) wrThreadYield();
-    threadGraphics(NULL);
+    threadCreate(threadGraphics, NULL);
+    
+    while(1) wrThreadYield();
     return 0;
 }
 
@@ -113,17 +114,3 @@ void threadGraphics(void* param)
     } // while(1)
 }
 
-
-uint32_t myHandler(uint32_t code) {
-    // TODO: fix upcall with global_pointer
-    char* VIDEO_MEMORY_LOCAL = (char *)(0x50000000 + 0xFE800);
-    VIDEO_MEMORY_LOCAL[0x40 * 2 + 17] = '0' + code % 10;
-    return 0;
-}
-
-uint32_t myHandler2(uint32_t code) {
-    // TODO: fix upcall with global_pointer
-    char* VIDEO_MEMORY_LOCAL = (char *)(0x50000000 + 0xFE800);
-    VIDEO_MEMORY_LOCAL[0x40 * 2 + 18] = '0' + code % 10;
-    return 0;
-}
