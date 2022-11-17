@@ -8,7 +8,7 @@ extern uint8_t bird_img_1[64*64];
 extern uint8_t bird_img_2[64*64];
 extern uint8_t bird_background_img[288*512];
 
-extern FuncWriteTargetMem writeTargetMem;
+// extern FuncWriteTargetMem writeTargetMem;
 
 void initVideoSetting()
 {

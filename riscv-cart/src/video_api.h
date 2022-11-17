@@ -13,6 +13,7 @@ int setLargeSpriteDataImage(uint32_t idx, uint8_t * addr);
 #define DISPLAY_MODE_TEXT 0
 #define DISPLAY_MODE_GRAPHICS 1
 void setDisplayMode(uint32_t mode);
+int linePrintf(uint32_t line_idx, const char *format, ...);
 
 // internal interfaces, export for debug only
 #if 1

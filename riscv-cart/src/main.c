@@ -23,48 +23,29 @@ uint32_t registerHandler(uint32_t code);
 uint32_t myHandler(uint32_t code);
 uint32_t myHandler2(uint32_t code);
 
-volatile int invokingFlag = 0;
+// extern uint8_t bird_img_0[64*64];
+// extern uint8_t bird_img_1[64*64];
+// extern uint8_t bird_img_2[64*64];
 
-extern uint8_t bird_img_0[64*64];
-extern uint8_t bird_img_1[64*64];
-extern uint8_t bird_img_2[64*64];
-
-volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
-volatile char *MODE_CONTROL_REG = (volatile char *)(0x50000000 + 0xFF414);
+// volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
+// volatile char *MODE_CONTROL_REG = (volatile char *)(0x50000000 + 0xFF414);
 
 void threadGraphics(void* param);
 
 void idleThread(void* param)
 {
-    char *VIDEO_MEMORY = (char *)(0x50000000 + 0xFE800);
-    int cnt = 0;
+    uint8_t cnt = 0;
     while (1)
     {
-        VIDEO_MEMORY[0x40*6 + 1] = '0' + (cnt++) % 10;
+        linePrintf(7, "idle thread cnt: 0x%X", cnt++);
         wrThreadYield();
     }
     
 }
 
 int main() {
-    registerHandler((uint32_t) myHandler);
-    registerHandler((uint32_t) myHandler2);
-    invokingFlag = 1;
-    // hold the invoking, otherwise the main will be invoked repeatedly.
 
     initHookFunctions();
-
-    int a = 4;
-    int b = 12;
-    int last_global = 42;
-    int x_pos = 18;
-
-    char video_cnt_str[]= "video interrupt:";
-    char cmd_cnt_str[]= "CMD interrupt:";
-    char timer_cnt_str[]= "timer interrupt:";
-    memcpy((void*)&VIDEO_MEMORY[0x40*0], video_cnt_str, sizeof(video_cnt_str));
-    memcpy((void*)&VIDEO_MEMORY[0x40*1], cmd_cnt_str, sizeof(cmd_cnt_str));
-    memcpy((void*)&VIDEO_MEMORY[0x40*2], timer_cnt_str, sizeof(timer_cnt_str));
 
     initVideoSetting();
     threadCreate(idleThread, NULL);
@@ -84,15 +65,15 @@ void threadGraphics(void* param)
     while (1) {
         global = getTicks();
         if(global != last_time){
-            VIDEO_MEMORY[17] = '0' + (getVideoInterruptSeq() % 10);
+            linePrintf(0, "video interrupt: %d", getVideoInterruptSeq());
             
             int cmdSeq = getCmdInterruptSeq();
-            VIDEO_MEMORY[15 +  + 0x40] = '0' + cmdSeq % 10;
+            linePrintf(1, "cmd interrupt: %d", cmdSeq);
             
             setDisplayMode(cmdSeq ^ 1);
             controller_status = getStatus();
             if(controller_status){
-                VIDEO_MEMORY[x_pos] = ' ';
+                // VIDEO_MEMORY[x_pos] = ' ';
                 if(controller_status & 0x1){
                     sprite_x -= move_speed;
                     if(x_pos & 0x3F){
@@ -118,7 +99,7 @@ void threadGraphics(void* param)
                     }
                 }
                 // setLargeSpriteControl(0, 64, 64, sprite_x, sprite_y, 1);
-                VIDEO_MEMORY[x_pos] = 'X';
+                // VIDEO_MEMORY[x_pos] = 'X';
             }
             for(int i = 0; i < 3; i++)
             {

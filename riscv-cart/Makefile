@@ -26,7 +26,7 @@ endif
 
 LDFILE   = riscv32-console.ld
 INCLUDE  += -I $(INC_DIR)
-CFLAGS   += -ffreestanding  -nostartfiles -nostdlib -nodefaultlibs
+CFLAGS   += -ffreestanding  -nostartfiles
 LDFLAGS  += -lc
 LDFLAGS  += -Wl,--gc-sections -Wl,-T,$(LDFILE)
 
@@ -35,6 +35,7 @@ TARGET_NAME = riscv-console-cartridge
 TARGET_OBJS =   $(OBJ_DIR)/main.o               \
                 $(OBJ_DIR)/crt0.o               \
 				$(OBJ_DIR)/app.o               \
+				$(OBJ_DIR)/printf.o               \
 				$(OBJ_DIR)/img_data.o               \
 				$(OBJ_DIR)/video_api.o               \
                 $(OBJ_DIR)/startup.o

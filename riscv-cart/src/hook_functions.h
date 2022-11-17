@@ -2,15 +2,19 @@
 #define _HOOK_FUNCTION_H_
 
 typedef void (*FuncNativeYield)();
-typedef uint32_t (*FuncWriteTargetMem)(uint32_t mem_handle, uint32_t source_addr, uint32_t mem_len);
-typedef uint32_t (*FuncWriteTarget)(uint32_t mem_handle, uint32_t value);
+// typedef uint32_t (*FuncWriteTargetMem)(uint32_t mem_handle, uint32_t source_addr, uint32_t mem_len);
+// typedef uint32_t (*FuncWriteTarget)(uint32_t mem_handle, uint32_t value);
+
+// extern FuncWriteTargetMem writeTargetMem;
+// extern FuncWriteTarget writeTarget;
+extern FuncNativeYield nativeYield;
 
 void initHookFunctions();
 void wrThreadYield();
 
 #ifdef HOOK_FUNCTIONS_STATIC_OBJECTS_ON
-FuncWriteTargetMem writeTargetMem;
-FuncWriteTarget writeTarget;
+// FuncWriteTargetMem writeTargetMem;
+// FuncWriteTarget writeTarget;
 FuncNativeYield nativeYield;
 
 uint32_t hookFunction(uint32_t func_id);
@@ -18,8 +22,8 @@ uint32_t getGlobalPointer(void);
 
 void initHookFunctions()
 {
-    writeTargetMem = (FuncWriteTargetMem)hookFunction(1);
-    writeTarget = (FuncWriteTarget)hookFunction(2);
+    // writeTargetMem = (FuncWriteTargetMem)hookFunction(1);
+    // writeTarget = (FuncWriteTarget)hookFunction(2);
     nativeYield = (FuncNativeYield)hookFunction(3);
 }
 
