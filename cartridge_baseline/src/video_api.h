@@ -12,6 +12,9 @@ int setBackgroundDataImage(uint32_t idx, uint8_t * addr);
 int setLargeSpriteDataImage(uint32_t idx, uint8_t * addr);
 #define DISPLAY_MODE_TEXT 0
 #define DISPLAY_MODE_GRAPHICS 1
+#define DISPLAY_WIDTH_PX 512
+#define DISPLAY_HEIGHT_PX 288
+#define DISPLAY_WIDTH_CHAR 0x40
 void setDisplayMode(uint32_t mode);
 int linePrintf(uint32_t line_idx, const char *format, ...);
 

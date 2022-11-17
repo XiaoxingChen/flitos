@@ -1,25 +1,11 @@
-#if !defined(_HOOK_FUNCTION_H_)
-#define _HOOK_FUNCTION_H_
-
-typedef void (*FuncNativeYield)();
-// typedef uint32_t (*FuncWriteTargetMem)(uint32_t mem_handle, uint32_t source_addr, uint32_t mem_len);
-// typedef uint32_t (*FuncWriteTarget)(uint32_t mem_handle, uint32_t value);
-
-// extern FuncWriteTargetMem writeTargetMem;
-// extern FuncWriteTarget writeTarget;
-// extern FuncNativeYield nativeYield;
-
-void wrThreadYield();
-
-#ifdef HOOK_FUNCTIONS_IMPLEMENTATION
-// FuncWriteTargetMem writeTargetMem;
-// FuncWriteTarget writeTarget;
+#include <stdint.h>
 
 uint32_t hookFunction(uint32_t func_id);
 uint32_t getGlobalPointer(void);
 
 void wrThreadYield()
 {
+    typedef void (*FuncNativeYield)();
     FuncNativeYield nativeYield = (FuncNativeYield)hookFunction(3);
     // load global pointer
     uint32_t cartridge_global_pointer;
@@ -35,10 +21,3 @@ void wrThreadYield()
     asm volatile ("mv gp, %0" : : "r"(cartridge_global_pointer));
     // unload global pointer
 }
-#endif
-
-
-
-
-
-#endif // _HOOK_FUNCTION_H_

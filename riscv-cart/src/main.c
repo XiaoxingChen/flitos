@@ -2,9 +2,7 @@
 #include <string.h>
 #include "video_api.h"
 #include "thread_api.h"
-
-#define HOOK_FUNCTIONS_IMPLEMENTATION
-#include "hook_functions.h"
+#include "workarounds.h"
 
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
