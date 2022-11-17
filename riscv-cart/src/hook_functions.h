@@ -7,28 +7,20 @@ typedef void (*FuncNativeYield)();
 
 // extern FuncWriteTargetMem writeTargetMem;
 // extern FuncWriteTarget writeTarget;
-extern FuncNativeYield nativeYield;
+// extern FuncNativeYield nativeYield;
 
-void initHookFunctions();
 void wrThreadYield();
 
-#ifdef HOOK_FUNCTIONS_STATIC_OBJECTS_ON
+#ifdef HOOK_FUNCTIONS_IMPLEMENTATION
 // FuncWriteTargetMem writeTargetMem;
 // FuncWriteTarget writeTarget;
-FuncNativeYield nativeYield;
 
 uint32_t hookFunction(uint32_t func_id);
 uint32_t getGlobalPointer(void);
 
-void initHookFunctions()
-{
-    // writeTargetMem = (FuncWriteTargetMem)hookFunction(1);
-    // writeTarget = (FuncWriteTarget)hookFunction(2);
-    nativeYield = (FuncNativeYield)hookFunction(3);
-}
-
 void wrThreadYield()
 {
+    FuncNativeYield nativeYield = (FuncNativeYield)hookFunction(3);
     // load global pointer
     uint32_t cartridge_global_pointer;
     uint32_t firmware_global_pointer;

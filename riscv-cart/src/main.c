@@ -3,7 +3,7 @@
 #include "video_api.h"
 #include "thread_api.h"
 
-#define HOOK_FUNCTIONS_STATIC_OBJECTS_ON
+#define HOOK_FUNCTIONS_IMPLEMENTATION
 #include "hook_functions.h"
 
 volatile int global = 42;
@@ -44,8 +44,6 @@ void idleThread(void* param)
 }
 
 int main() {
-
-    initHookFunctions();
 
     initVideoSetting();
     threadCreate(idleThread, NULL);
