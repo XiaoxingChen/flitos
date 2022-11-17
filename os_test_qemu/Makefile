@@ -12,8 +12,8 @@ STRIP=$(TOOLPREFIX)strip
 INC_DIR = ./include
 SRC_DIR = ./src
 OBJ_DIR = ./obj
-OS_DEMO_INC_DIR = ../snake/src
-OS_DEMO_SRC_DIR = ../snake/src
+OS_KERNEL_INC_DIR = ../os_kernel/src
+OS_KERNEL_SRC_DIR = ../os_kernel/src
 BIN_DIR = ./bin
 
 DEBUG_MODE=TRUE
@@ -27,7 +27,7 @@ CFLAGS   += -O3
 endif
 
 LDFILE   = riscv32-console.ld
-INCLUDE  += -I $(INC_DIR) -I $(OS_DEMO_INC_DIR)
+INCLUDE  += -I $(INC_DIR) -I $(OS_KERNEL_INC_DIR)
 CFLAGS   += -ffreestanding  -nostartfiles -fno-exceptions
 LDFLAGS  += -lc -lnosys -lgcc -lstdc++
 LDFLAGS  += -Wl,--gc-sections -Wl,-T,$(LDFILE)
@@ -49,21 +49,21 @@ $(BIN_DIR)/$(TARGET_NAME): $(TARGET_OBJS)
 	$(CC) $(TARGET_OBJS) -o $(BIN_DIR)/$(TARGET_NAME) $(CFLAGS) $(DEFINES) $(LDFLAGS)
 	$(STRIP) $(BIN_DIR)/$(TARGET_NAME) -o $(BIN_DIR)/$(TARGET_NAME).strip
 
-$(OBJ_DIR)/crt0.o: $(OS_DEMO_SRC_DIR)/crt0.s
+$(OBJ_DIR)/crt0.o: $(SRC_DIR)/crt0.s
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-$(OBJ_DIR)/interrupt.o: $(OS_DEMO_SRC_DIR)/interrupt.s
+$(OBJ_DIR)/interrupt.o: $(SRC_DIR)/interrupt.s
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-$(OBJ_DIR)/context_switch.o: $(OS_DEMO_SRC_DIR)/context_switch.s
+$(OBJ_DIR)/context_switch.o: $(OS_KERNEL_SRC_DIR)/context_switch.s
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
 	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
-$(OBJ_DIR)/new_delete_overloading.o: $(OS_DEMO_SRC_DIR)/new_delete_overloading.c
+$(OBJ_DIR)/new_delete_overloading.o: $(OS_KERNEL_SRC_DIR)/new_delete_overloading.c
 	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 $(OBJ_DIR)/startup.o: $(SRC_DIR)/startup.c
 	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-$(OBJ_DIR)/utils.o: $(OS_DEMO_SRC_DIR)/utils.c
+$(OBJ_DIR)/utils.o: $(OS_KERNEL_SRC_DIR)/utils.c
 	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 directories: $(OBJ_DIR) $(BIN_DIR)
