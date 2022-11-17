@@ -9,6 +9,7 @@ extern uint8_t _sdata[];
 extern uint8_t _esdata[];
 extern uint8_t _bss[];
 extern uint8_t _ebss[];
+extern uint8_t __global_pointer$[];
 
 // Adapted from https://stackoverflow.com/questions/58947716/how-to-interact-with-risc-v-csrs-by-using-gcc-c-code
 __attribute__((always_inline)) inline uint32_t
@@ -154,6 +155,9 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
     else if(call == 11)
     {
         cs251::thread_yield();
+    }else if(call == 12)
+    {
+        return (uint32_t)__global_pointer$;
     }
     return -1;
 }

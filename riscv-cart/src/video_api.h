@@ -16,8 +16,6 @@ void setDisplayMode(uint32_t mode);
 
 // internal interfaces, export for debug only
 #if 1
-typedef uint32_t (*FuncWriteTargetMem)(uint32_t mem_handle, uint32_t source_addr, uint32_t mem_len);
-typedef uint32_t (*FuncWriteTarget)(uint32_t mem_handle, uint32_t value);
 void wrapCall(uint32_t handle, uint32_t addr, uint32_t mem_len);
 #endif
 

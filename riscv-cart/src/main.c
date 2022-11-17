@@ -3,6 +3,9 @@
 #include "video_api.h"
 #include "thread_api.h"
 
+#define HOOK_FUNCTIONS_STATIC_OBJECTS_ON
+#include "hook_functions.h"
+
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
 uint32_t getTicks(void);
@@ -29,12 +32,19 @@ extern uint8_t bird_img_2[64*64];
 volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
 volatile char *MODE_CONTROL_REG = (volatile char *)(0x50000000 + 0xFF414);
 
-uint32_t hookFunction(uint32_t func_id);
-
-FuncWriteTargetMem writeTargetMem;
-FuncWriteTarget writeTarget;
-
 void threadGraphics(void* param);
+
+void idleThread(void* param)
+{
+    char *VIDEO_MEMORY = (char *)(0x50000000 + 0xFE800);
+    int cnt = 0;
+    while (1)
+    {
+        VIDEO_MEMORY[0x40*6 + 1] = '0' + (cnt++) % 10;
+        wrThreadYield();
+    }
+    
+}
 
 int main() {
     registerHandler((uint32_t) myHandler);
@@ -42,13 +52,12 @@ int main() {
     invokingFlag = 1;
     // hold the invoking, otherwise the main will be invoked repeatedly.
 
+    initHookFunctions();
+
     int a = 4;
     int b = 12;
     int last_global = 42;
     int x_pos = 18;
-
-    writeTargetMem = (FuncWriteTargetMem)hookFunction(1);
-    writeTarget = (FuncWriteTarget)hookFunction(2);
 
     char video_cnt_str[]= "video interrupt:";
     char cmd_cnt_str[]= "CMD interrupt:";
@@ -58,6 +67,8 @@ int main() {
     memcpy((void*)&VIDEO_MEMORY[0x40*2], timer_cnt_str, sizeof(timer_cnt_str));
 
     initVideoSetting();
+    threadCreate(idleThread, NULL);
+    // while(1) wrThreadYield();
     threadGraphics(NULL);
     return 0;
 }
@@ -115,7 +126,9 @@ void threadGraphics(void* param)
             }
             last_time = global;
         } //global != last_time
-        // threadYield();
+        wrThreadYield();
+        // uint32_t g_ptr = getGlobalPointer();
+        // *(uint32_t*)VIDEO_MEMORY = g_ptr;
     } // while(1)
 }
 
