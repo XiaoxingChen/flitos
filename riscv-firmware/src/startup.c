@@ -156,7 +156,7 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
     }
     else if(call == 11)
     {
-        cs251::thread_yield();
+        // cs251::thread_yield();
     }else if(call == 12)
     {
         return (uint32_t)__global_pointer$;

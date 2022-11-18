@@ -16,7 +16,7 @@ _start:
     
 
 .section .text, "ax"
-.global getTicks, getStatus, getVideoInterruptSeq, hookFunction, getCmdInterruptSeq, registerHandler, threadCreate, threadYield, getGlobalPointer
+.global getTicks, getStatus, getVideoInterruptSeq, hookFunction, getCmdInterruptSeq, registerHandler, threadCreate, /*threadYield,*/ getGlobalPointer
 .global writeTargetMem, writeTarget
 getTicks:
     li a5, 0
@@ -45,9 +45,9 @@ getCmdInterruptSeq:
 threadCreate:
     li a5, 10
     ecall
-threadYield:
-    li a5, 11
-    ecall  
+; threadYield:
+;     li a5, 11
+;     ecall  
 getGlobalPointer:
     li a5, 12
     ecall

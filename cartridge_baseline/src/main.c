@@ -2,7 +2,6 @@
 #include <string.h>
 #include "video_api.h"
 #include "thread_api.h"
-#include "workarounds.h"
 
 void initVideoSetting()
 {
@@ -43,7 +42,7 @@ void threadSpriteMotion(void* param)
         x_pos += 1;
         if(x_pos > 450) x_pos = 50;
         setLargeSpriteControl(0, 64, 64, x_pos, 30, 1);
-        wrThreadYield();
+        threadYield();
     }
 }
 
@@ -51,6 +50,6 @@ int main(int argc, char const *argv[])
 {
     initVideoSetting();
     threadCreate(threadSpriteMotion, NULL);
-    while(1) wrThreadYield();
+    while(1) threadYield();
     return 0;
 }

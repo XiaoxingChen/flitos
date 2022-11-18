@@ -2,7 +2,6 @@
 #include <string.h>
 #include "video_api.h"
 #include "thread_api.h"
-#include "workarounds.h"
 
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
@@ -36,7 +35,7 @@ void idleThread(void* param)
     while (1)
     {
         linePrintf(7, "idle thread cnt: 0x%X", cnt++);
-        wrThreadYield();
+        threadYield();
     }
     
 }
@@ -47,7 +46,7 @@ int main() {
     threadCreate(idleThread, NULL);
     threadCreate(threadGraphics, NULL);
     
-    while(1) wrThreadYield();
+    while(1) threadYield();
     return 0;
 }
 
@@ -104,7 +103,7 @@ void threadGraphics(void* param)
             }
             last_time = global;
         } //global != last_time
-        wrThreadYield();
+        threadYield();
         // uint32_t g_ptr = getGlobalPointer();
         // *(uint32_t*)VIDEO_MEMORY = g_ptr;
     } // while(1)
