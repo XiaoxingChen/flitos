@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <string.h>
 #include "video_api.h"
-#include "hook_functions.h"
 #include "nanoprintf.h"
 
 uint32_t writeTargetMem(uint32_t handle, uint32_t src_addr, uint32_t len);
