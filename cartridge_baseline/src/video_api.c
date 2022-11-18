@@ -1,11 +1,13 @@
 #include <stdint.h>
 #include <string.h>
 #include "video_api.h"
+#include "hook_functions.h"
+#include "nanoprintf.h"
 
-// uint32_t writeTargetMem(uint32_t handle, uint32_t src_addr, uint32_t len);
-// uint32_t writeTarget(uint32_t handle, uint32_t value);
-extern FuncWriteTargetMem writeTargetMem;
-extern FuncWriteTarget writeTarget;
+uint32_t writeTargetMem(uint32_t handle, uint32_t src_addr, uint32_t len);
+uint32_t writeTarget(uint32_t handle, uint32_t value);
+// extern FuncWriteTargetMem writeTargetMem;
+// extern FuncWriteTarget writeTarget;
 
 void setLargeSpriteControl(uint32_t idx, uint32_t h, uint32_t w, uint32_t x, uint16_t y, uint32_t palette)
 {
@@ -77,4 +79,21 @@ int setLargeSpriteDataImage(uint32_t idx, uint8_t * addr)
 void setDisplayMode(uint32_t mode)
 {
     writeTarget(0xFF414, mode & 0x1);
+}
+
+int linePrintf(uint32_t line_idx, const char *format, ...)
+{
+#if 1
+    uint32_t line_width = 0x40;
+    char vsnprintf_buff[0x40];
+    va_list args;
+    int n = line_width;
+    va_start(args, format);
+	n = npf_vsnprintf(vsnprintf_buff, line_width, format, args);
+	va_end(args);
+
+    if(n > line_width) n = line_width;
+    return writeIndexedTarget(0xFE800, line_width, line_idx, vsnprintf_buff, n);
+
+#endif
 }

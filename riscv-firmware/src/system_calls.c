@@ -1,6 +1,11 @@
 #include <stdint.h>
 #include <string.h>
 
+namespace cs251{
+    int thread_yield();
+}
+
+
 uint32_t* regAddrFromMemHandle(uint32_t mem_handle)
 {
     return (uint32_t*)(mem_handle + 0x50000000);
@@ -38,6 +43,9 @@ uint32_t hookFunctionPointer(uint32_t fun_id)
     }else if(2 == fun_id)
     {
         return (uint32_t)&writeTarget;
+    }else if(3 == fun_id)
+    {
+        return (uint32_t)&cs251::thread_yield;
     }
     return 0;
 }

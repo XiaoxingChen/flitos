@@ -12,12 +12,14 @@ int setBackgroundDataImage(uint32_t idx, uint8_t * addr);
 int setLargeSpriteDataImage(uint32_t idx, uint8_t * addr);
 #define DISPLAY_MODE_TEXT 0
 #define DISPLAY_MODE_GRAPHICS 1
+#define DISPLAY_WIDTH_PX 512
+#define DISPLAY_HEIGHT_PX 288
+#define DISPLAY_WIDTH_CHAR 0x40
 void setDisplayMode(uint32_t mode);
+int linePrintf(uint32_t line_idx, const char *format, ...);
 
 // internal interfaces, export for debug only
 #if 1
-typedef uint32_t (*FuncWriteTargetMem)(uint32_t mem_handle, uint32_t source_addr, uint32_t mem_len);
-typedef uint32_t (*FuncWriteTarget)(uint32_t mem_handle, uint32_t value);
 void wrapCall(uint32_t handle, uint32_t addr, uint32_t mem_len);
 #endif
 

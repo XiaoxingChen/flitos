@@ -14,9 +14,6 @@ SRC_DIR = ./src
 OBJ_DIR = ./obj
 BIN_DIR = ./bin
 
-BASELINE_SRC_DIR = ../cartridge_baseline/src
-BASELINE_INC_DIR = ../cartridge_baseline/src
-
 DEBUG_MODE=TRUE
 
 ifdef DEBUG_MODE
@@ -28,19 +25,17 @@ CFLAGS   += -O3
 endif
 
 LDFILE   = riscv32-console.ld
-INCLUDE  += -I $(INC_DIR) -I $(BASELINE_INC_DIR)
+INCLUDE  += -I $(INC_DIR)
 CFLAGS   += -ffreestanding  -nostartfiles
 LDFLAGS  += -lc
 LDFLAGS  += -Wl,--gc-sections -Wl,-T,$(LDFILE)
 
-TARGET_NAME = riscv-console-cartridge
+TARGET_NAME = group-1-cartridge-baseline
 
 TARGET_OBJS =   $(OBJ_DIR)/main.o               \
                 $(OBJ_DIR)/crt0.o               \
-				$(OBJ_DIR)/app.o               \
-				$(OBJ_DIR)/workarounds.o               \
 				$(OBJ_DIR)/printf.o               \
-				$(OBJ_DIR)/img_data.o               \
+				$(OBJ_DIR)/workarounds.o               \
 				$(OBJ_DIR)/video_api.o               \
                 $(OBJ_DIR)/startup.o
 
@@ -53,28 +48,7 @@ $(BIN_DIR)/$(TARGET_NAME): $(TARGET_OBJS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
-$(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
-	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-
-$(OBJ_DIR)/app.o: $(SRC_DIR)/app.c
-	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-
-$(OBJ_DIR)/img_data.o: $(SRC_DIR)/img_data.c
-	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-
-$(OBJ_DIR)/crt0.o: $(BASELINE_INC_DIR)/crt0.s
-	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-
-$(OBJ_DIR)/printf.o: $(BASELINE_INC_DIR)/printf.c
-	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-
-$(OBJ_DIR)/video_api.o: $(BASELINE_INC_DIR)/video_api.c
-	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-
-$(OBJ_DIR)/startup.o: $(BASELINE_INC_DIR)/startup.c
-	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
-
-$(OBJ_DIR)/workarounds.o: $(BASELINE_INC_DIR)/workarounds.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 	
 directories: $(OBJ_DIR) $(BIN_DIR)

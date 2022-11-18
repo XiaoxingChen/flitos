@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <string.h>
 #include "video_api.h"
+#include "thread_api.h"
+#include "workarounds.h"
 
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
@@ -19,59 +21,56 @@ uint32_t registerHandler(uint32_t code);
 uint32_t myHandler(uint32_t code);
 uint32_t myHandler2(uint32_t code);
 
-volatile int invokingFlag = 0;
+// extern uint8_t bird_img_0[64*64];
+// extern uint8_t bird_img_1[64*64];
+// extern uint8_t bird_img_2[64*64];
 
-extern uint8_t bird_img_0[64*64];
-extern uint8_t bird_img_1[64*64];
-extern uint8_t bird_img_2[64*64];
+// volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
+// volatile char *MODE_CONTROL_REG = (volatile char *)(0x50000000 + 0xFF414);
 
-volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
-volatile char *MODE_CONTROL_REG = (volatile char *)(0x50000000 + 0xFF414);
+void threadGraphics(void* param);
 
-uint32_t hookFunction(uint32_t func_id);
-
-FuncWriteTargetMem writeTargetMem;
-FuncWriteTarget writeTarget;
-
+void idleThread(void* param)
+{
+    uint8_t cnt = 0;
+    while (1)
+    {
+        linePrintf(7, "idle thread cnt: 0x%X", cnt++);
+        wrThreadYield();
+    }
+    
+}
 
 int main() {
-    registerHandler((uint32_t) myHandler);
-    registerHandler((uint32_t) myHandler2);
-    invokingFlag = 1;
-    // hold the invoking, otherwise the main will be invoked repeatedly.
-
-    int a = 4;
-    int b = 12;
-    int last_global = 42;
-    int x_pos = 18;
-
-    writeTargetMem = (FuncWriteTargetMem)hookFunction(1);
-    writeTarget = (FuncWriteTarget)hookFunction(2);
-
-    char video_cnt_str[]= "video interrupt:";
-    char cmd_cnt_str[]= "CMD interrupt:";
-    char timer_cnt_str[]= "timer interrupt:";
-    memcpy((void*)&VIDEO_MEMORY[0x40*0], video_cnt_str, sizeof(video_cnt_str));
-    memcpy((void*)&VIDEO_MEMORY[0x40*1], cmd_cnt_str, sizeof(cmd_cnt_str));
-    memcpy((void*)&VIDEO_MEMORY[0x40*2], timer_cnt_str, sizeof(timer_cnt_str));
 
     initVideoSetting();
+    threadCreate(idleThread, NULL);
+    threadCreate(threadGraphics, NULL);
+    
+    while(1) wrThreadYield();
+    return 0;
+}
+
+void threadGraphics(void* param)
+{
+    int x_pos = 18;
     uint32_t sprite_x = 30;
     uint32_t sprite_y = 30;
     int move_speed = 5;
-
+    uint32_t time_counter = 0;
+    uint32_t last_time = 0;
     while (1) {
         global = getTicks();
-        if(global != last_global){
-            VIDEO_MEMORY[17] = '0' + (getVideoInterruptSeq() % 10);
+        if(global != last_time){
+            linePrintf(0, "video interrupt: %d", getVideoInterruptSeq());
             
             int cmdSeq = getCmdInterruptSeq();
-            VIDEO_MEMORY[15 +  + 0x40] = '0' + cmdSeq % 10;
+            linePrintf(1, "cmd interrupt: %d", cmdSeq);
             
             setDisplayMode(cmdSeq ^ 1);
             controller_status = getStatus();
             if(controller_status){
-                VIDEO_MEMORY[x_pos] = ' ';
+                // VIDEO_MEMORY[x_pos] = ' ';
                 if(controller_status & 0x1){
                     sprite_x -= move_speed;
                     if(x_pos & 0x3F){
@@ -97,31 +96,17 @@ int main() {
                     }
                 }
                 // setLargeSpriteControl(0, 64, 64, sprite_x, sprite_y, 1);
-                VIDEO_MEMORY[x_pos] = 'X';
+                // VIDEO_MEMORY[x_pos] = 'X';
             }
             for(int i = 0; i < 3; i++)
             {
                 setLargeSpriteControl(i, 64, 64, sprite_x, sprite_y, i == global % 3);
             }
-            last_global = global;
-        } //global != last_global
-
+            last_time = global;
+        } //global != last_time
+        wrThreadYield();
+        // uint32_t g_ptr = getGlobalPointer();
+        // *(uint32_t*)VIDEO_MEMORY = g_ptr;
     } // while(1)
-
-    return 0;
 }
 
-
-uint32_t myHandler(uint32_t code) {
-    // TODO: fix upcall with global_pointer
-    char* VIDEO_MEMORY_LOCAL = (char *)(0x50000000 + 0xFE800);
-    VIDEO_MEMORY_LOCAL[0x40 * 2 + 17] = '0' + code % 10;
-    return 0;
-}
-
-uint32_t myHandler2(uint32_t code) {
-    // TODO: fix upcall with global_pointer
-    char* VIDEO_MEMORY_LOCAL = (char *)(0x50000000 + 0xFE800);
-    VIDEO_MEMORY_LOCAL[0x40 * 2 + 18] = '0' + code % 10;
-    return 0;
-}

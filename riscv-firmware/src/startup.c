@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "include/timer.h"
+#include "cs251_os.h"
 
 extern uint8_t _erodata[];
 extern uint8_t _data[];
@@ -8,6 +9,7 @@ extern uint8_t _sdata[];
 extern uint8_t _esdata[];
 extern uint8_t _bss[];
 extern uint8_t _ebss[];
+extern uint8_t __global_pointer$[];
 
 // Adapted from https://stackoverflow.com/questions/58947716/how-to-interact-with-risc-v-csrs-by-using-gcc-c-code
 __attribute__((always_inline)) inline uint32_t
@@ -41,6 +43,10 @@ __attribute__((always_inline)) inline void csr_disable_interrupts(void) {
 #define MTIMECMP_HIGH   (*((volatile uint32_t *)0x40000014))
 #define CONTROLLER      (*((volatile uint32_t *)0x40000018))
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 void init(void) {
     uint8_t *Source = _erodata;
     uint8_t *Base = _data < _sdata ? _data : _sdata;
@@ -61,6 +67,10 @@ void init(void) {
     MTIMECMP_HIGH = MTIME_HIGH;
 }
 
+#ifdef __cplusplus
+}
+#endif
+
 extern volatile int global;
 extern volatile uint32_t controller_status;
 extern volatile char *VIDEO_MEMORY;
@@ -75,6 +85,10 @@ void increase_timer() {
     MTIMECMP_HIGH = NewCompare >> 32;
 
 }
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 void c_interrupt_handler(uint32_t mcause) {
     int flag = handle_time_interrupt(mcause);
@@ -98,8 +112,17 @@ void c_interrupt_handler(uint32_t mcause) {
     }
 }
 
+#ifdef __cplusplus
+}
+#endif
+
 volatile uint32_t aaa = 0;
 uint32_t hookFunctionPointer(uint32_t fun_id);
+uint32_t writeTargetMem(uint32_t mem_handle, uint32_t source_addr, uint32_t mem_len);
+uint32_t writeTarget(uint32_t mem_handle, uint32_t value);
+#ifdef __cplusplus
+extern "C"{
+#endif
 uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t call){
     if(call == 0){
         return global;
@@ -112,11 +135,11 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
         register_handler(a0);
         return 5;
     }
-    // else if(call == 6){
-    //     return writeTargetMem(a0, a1, a2);
-    // }else if(call == 7){
-    //     return writeTarget(a0, a1);
-    // }
+    else if(call == 6){
+        return writeTargetMem(a0, a1, a2);
+    }else if(call == 7){
+        return writeTarget(a0, a1);
+    }
     else if(call == 8)
     {
         return hookFunctionPointer(a0);
@@ -125,6 +148,21 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
     {
         return cmd_seq;
     }
+    else if(call == 10)
+    {
+        typedef void (*f_thread)(void*);
+        uint32_t thread_id = cs251::schedulerInstance().create((f_thread)a0, (void*)a1);
+        return thread_id;
+    }
+    else if(call == 11)
+    {
+        cs251::thread_yield();
+    }else if(call == 12)
+    {
+        return (uint32_t)__global_pointer$;
+    }
     return -1;
 }
-
+#ifdef __cplusplus
+}
+#endif
