@@ -160,6 +160,21 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
     }else if(call == 12)
     {
         return (uint32_t)__global_pointer$;
+    }else if(call == 13)
+    {
+        return (uint32_t)cs251::mutextFactoryInstance().create();
+    }else if(call == 14)
+    {
+        cs251::mutextFactoryInstance().destroy(a0);
+    }
+    else if(call == 15)
+    {
+        // not tested
+        cs251::mutextFactoryInstance().lock(a0);
+    }else if(call == 16)
+    {
+        // not tested
+        cs251::mutextFactoryInstance().unlock(a0);
     }
     return -1;
 }
