@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
-// #include "snake.h"
+#include "uart_printf.h"
 #include "cs251_os.h"
 #include <stddef.h>
 volatile int global = 42;
@@ -118,8 +118,7 @@ int main() {
     // }
     // initForIdleThread();
     VIDEO_MEMORY[0x40 * 4] = '0';
-    char hello_str[] = "Hello world\n";
-    for(int i = 0; i < sizeof(hello_str); i++) UART_MEMORY[0] = hello_str[i];
+    printf("Hello world\n");
 
     uint32_t display_offsets[] = {0x40+0,0x40+1,0x40+2,0x40+3};
 

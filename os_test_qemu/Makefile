@@ -14,6 +14,8 @@ SRC_DIR = ./src
 OBJ_DIR = ./obj
 OS_KERNEL_INC_DIR = ../os_kernel/src
 OS_KERNEL_SRC_DIR = ../os_kernel/src
+BASELINE_INC_DIR = ../cartridge_baseline/src
+BASELINE_SRC_DIR = ../cartridge_baseline/src
 BIN_DIR = ./bin
 
 DEBUG_MODE=TRUE
@@ -27,7 +29,7 @@ CFLAGS   += -O3
 endif
 
 LDFILE   = riscv32-console.ld
-INCLUDE  += -I $(INC_DIR) -I $(OS_KERNEL_INC_DIR)
+INCLUDE  += -I $(INC_DIR) -I $(OS_KERNEL_INC_DIR) -I $(BASELINE_INC_DIR)
 CFLAGS   += -ffreestanding  -nostartfiles -fno-exceptions
 LDFLAGS  += -lc -lnosys -lgcc -lstdc++
 LDFLAGS  += -Wl,--gc-sections -Wl,-T,$(LDFILE)
@@ -39,6 +41,8 @@ TARGET_OBJS =   $(OBJ_DIR)/main.o               \
                 $(OBJ_DIR)/crt0.o               \
                 $(OBJ_DIR)/interrupt.o          \
 				$(OBJ_DIR)/context_switch.o          \
+				$(OBJ_DIR)/printf.o          \
+				$(OBJ_DIR)/uart_printf.o          \
                 $(OBJ_DIR)/startup.o			\
 				$(OBJ_DIR)/utils.o			\
 
@@ -58,12 +62,17 @@ $(OBJ_DIR)/context_switch.o: $(OS_KERNEL_SRC_DIR)/context_switch.s
 
 $(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
 	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+$(OBJ_DIR)/uart_printf.o: $(SRC_DIR)/uart_printf.c
+	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)/new_delete_overloading.o: $(OS_KERNEL_SRC_DIR)/new_delete_overloading.c
 	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 $(OBJ_DIR)/startup.o: $(SRC_DIR)/startup.c
 	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 $(OBJ_DIR)/utils.o: $(OS_KERNEL_SRC_DIR)/utils.c
+	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/printf.o: $(BASELINE_SRC_DIR)/printf.c
 	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 directories: $(OBJ_DIR) $(BIN_DIR)
