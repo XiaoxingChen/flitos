@@ -37,12 +37,11 @@ TARGET_OBJS =   $(OBJ_DIR)/main.o               \
 				$(OBJ_DIR)/app.o               \
 				$(OBJ_DIR)/img_data.o               \
 				$(OBJ_DIR)/video_api.o               \
-                $(OBJ_DIR)/startup.o \
-				$(OBJ_DIR)/graphics_api.o \
+                $(OBJ_DIR)/startup.o
 
 all: directories $(BIN_DIR)/$(TARGET_NAME)
 
-$(BIN_DIR)/$(TARGET_NAME): $(TARGET_OBJS) 
+$(BIN_DIR)/$(TARGET_NAME): $(TARGET_OBJS)
 	$(CC) $(TARGET_OBJS) -o $(BIN_DIR)/$(TARGET_NAME) $(CFLAGS) $(DEFINES) $(LDFLAGS) 
 	$(STRIP) $(BIN_DIR)/$(TARGET_NAME) -o $(BIN_DIR)/$(TARGET_NAME).strip
 
