@@ -40,11 +40,25 @@ void idleThread(void* param)
     
 }
 
+void threadCommandButtonMonitor(void* param)
+{
+    while(1)
+    {
+        int cmdSeq = getCmdInterruptSeq();
+        linePrintf(1, "cmd interrupt: %d", cmdSeq);
+        
+        setDisplayMode(cmdSeq ^ 1);
+        threadYield();
+    }
+    
+}
+
 int main() {
 
     initVideoSetting();
     threadCreate(idleThread, NULL);
     threadCreate(threadGraphics, NULL);
+    threadCreate(threadCommandButtonMonitor, NULL);
     
     while(1) threadYield();
     return 0;
@@ -62,11 +76,6 @@ void threadGraphics(void* param)
         global = getTicks();
         if(global != last_time){
             linePrintf(0, "video interrupt: %d", getVideoInterruptSeq());
-            
-            int cmdSeq = getCmdInterruptSeq();
-            linePrintf(1, "cmd interrupt: %d", cmdSeq);
-            
-            setDisplayMode(cmdSeq ^ 1);
             controller_status = getStatus();
             if(controller_status){
                 // VIDEO_MEMORY[x_pos] = ' ';
