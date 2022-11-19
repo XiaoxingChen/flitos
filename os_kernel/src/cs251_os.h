@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "ecs_list.h"
 #include "ecs_map.h"
+#include "port_riscv.h"
 
 #define THREAD_DEBUG
 
@@ -31,7 +32,7 @@ enum ThreadState
     eFINISHED
 };
 
-constexpr size_t SIZE_OF_POPAD = 14;
+// constexpr size_t SIZE_OF_POPAD = 14;
 constexpr size_t INITIAL_STACK_SIZE = 0x1000;
 using thread_id_t = int;
 using mutex_id_t = int;
@@ -56,9 +57,9 @@ public:
     void pushDummySwitchFrame()
     {
         if(!stack_ptr_) return;
-        stack_ptr_ -= SIZE_OF_POPAD;
-        *(stack_ptr_ + (SIZE_OF_POPAD - 1)) = reinterpret_cast<size_t>(stub_wrapper);
-        *(stack_ptr_ + (SIZE_OF_POPAD - 2)) = reinterpret_cast<size_t>(__global_pointer$);
+        stack_ptr_ -= static_cast<size_t>(context_size);
+        *(stack_ptr_ + static_cast<size_t>(offset_ra)) = reinterpret_cast<size_t>(stub_wrapper);
+        *(stack_ptr_ + static_cast<size_t>(offset_gp)) = reinterpret_cast<size_t>(__global_pointer$);
     }
 
     void init(void (*f)(void*), void* arg)
@@ -70,8 +71,8 @@ public:
         program_counter_ = reinterpret_cast<void*>(stub_wrapper);
 
         pushDummySwitchFrame();
-        *(stack_ptr_ + 4) = reinterpret_cast<size_t>(arg);
-        *(stack_ptr_ + 5) = reinterpret_cast<size_t>(f);
+        *(stack_ptr_ + static_cast<size_t>(offset_a1)) = reinterpret_cast<size_t>(arg);
+        *(stack_ptr_ + static_cast<size_t>(offset_a0)) = reinterpret_cast<size_t>(f);
         state_ = ThreadState::eREADY;
     }
 
