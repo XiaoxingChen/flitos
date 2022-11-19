@@ -116,7 +116,7 @@ void c_interrupt_handler(void){
     MTIMECMP_LOW = NewCompare;
     global++;
     controller_status = CONTROLLER;
-#if 0
+#if 1
     if(curr_timer < NewCompare && NewCompare < curr_timer + timecmp_step)
         cs251::schedulerInstance().inInterruptYield();
 #else

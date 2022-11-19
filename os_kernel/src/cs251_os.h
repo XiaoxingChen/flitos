@@ -7,7 +7,7 @@
 #include "ecs_map.h"
 #include "port_riscv.h"
 
-#define THREAD_DEBUG
+// #define THREAD_DEBUG
 
 #ifdef THREAD_DEBUG
 #include "uart_printf.h"
