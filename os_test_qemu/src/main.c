@@ -55,7 +55,7 @@ void mutexVerifyThread(void* args)
         cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_counter);
         *(p_mtx_cnt->p_counter) += 1;
         cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_counter);
-        cs251::thread_yield();
+        // cs251::thread_yield();
     }
     *(p_mtx_cnt->p_finish_cnt) += 1;
 }
@@ -64,23 +64,26 @@ void displayThread(void* args)
 {
     MutexCount* p_mtx_cnt = (MutexCount*)args;
     int val = 0; 
-    while(*(p_mtx_cnt->p_finish_cnt) < 2)
+    int last_val = 0;
+    while(1)
     {
         cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_counter);
         val = *(p_mtx_cnt->p_counter);
         cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_counter);
-        cs251::thread_yield();
+        if (val != last_val)
+        {
+            printf("cnt: %d\n", val);
+            last_val = val;
+        }
+        // cs251::thread_yield();
     }
-    cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_counter);
-    val = *(p_mtx_cnt->p_counter);
-    cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_counter);
-    if(val == 2000)
-    {
-        while(1) cs251::thread_yield();
-    }else
-    {
-        while(1) cs251::thread_yield();
-    }
+    // if(val == 2000)
+    // {
+    //     while(1) cs251::thread_yield();
+    // }else
+    // {
+    //     while(1) cs251::thread_yield();
+    // }
 }
 
 extern "C" void startFirstTask( uint32_t stk_ptr );
@@ -135,9 +138,9 @@ int main() {
     cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     // cs251::schedulerInstance().create(naiveThread, &display_offsets[2]);
     // cs251::schedulerInstance().create(naiveThread, &display_offsets[3]);
+    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    // cs251::schedulerInstance().create(displayThread, &mtx_cnt);
+    cs251::schedulerInstance().create(displayThread, &mtx_cnt);
     increaseTimeCompare(1000);
     cs251::schedulerInstance().launchFirstTask();
 

@@ -55,9 +55,9 @@ void init(void){
     // callConstructors();
 
     csr_write_mie(0x888);       // Enable all interrupt soruces
-    csr_enable_interrupts();    // Global interrupt enable
-    MTIMECMP_LOW = 1;
-    MTIMECMP_HIGH = 0;
+    // csr_enable_interrupts();    // Global interrupt enable
+    MTIMECMP_LOW = 0xffffffff;
+    MTIMECMP_HIGH = 0xffffffff;
 }
 #ifdef __cplusplus
 }
@@ -110,8 +110,8 @@ void c_interrupt_handler(void){
     uint64_t curr_timer = readMachineTime();
 
     uint64_t NewCompare = (((uint64_t)MTIMECMP_HIGH)<<32) | MTIMECMP_LOW;
-    if (NewCompare < curr_timer)
-        NewCompare += 5000;
+    while (NewCompare < curr_timer)
+        NewCompare += timecmp_step;
     MTIMECMP_HIGH = NewCompare>>32;
     MTIMECMP_LOW = NewCompare;
     global++;

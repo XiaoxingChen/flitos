@@ -50,7 +50,7 @@ context_switch:
     lw      a5,14*4(sp)
     addi    sp,sp,18*4
 
-    /* context_snapshot context_shot
+    /*context_snapshot context_shot
     call printContextSnapshot
     context_project context_shot */
     /* csrsi   mstatus, 0x8*/ /* enable interrupt */

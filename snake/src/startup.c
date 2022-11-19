@@ -69,7 +69,7 @@ extern "C"{
 int key_cnt = 0;
 void c_interrupt_handler(void){
     uint64_t NewCompare = (((uint64_t)MTIMECMP_HIGH)<<32) | MTIMECMP_LOW;
-    NewCompare += 5000;
+    NewCompare += 100;
     MTIMECMP_HIGH = NewCompare>>32;
     MTIMECMP_LOW = NewCompare;
     global++;
@@ -77,8 +77,8 @@ void c_interrupt_handler(void){
 
 #if 1
     uint64_t curr_timer = (((uint64_t)MTIME_HIGH << 32) | MTIME_LOW);
-    // if(NewCompare > curr_timer)
-    //     cs251::schedulerInstance().inInterruptYield();
+    if(NewCompare > curr_timer)
+        cs251::schedulerInstance().inInterruptYield();
 #else
     char *VIDEO_MEMORY = (char *)(0x50000000 + 0xFE800);
     uint32_t *INTERRUPT_PENDING = (uint32_t *)(0x40000004);

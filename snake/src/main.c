@@ -23,7 +23,7 @@ void idleThread(void* param)
     for(int i = 0; i < 1000;)
     {
         VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
-        cs251::thread_yield();
+        // cs251::thread_yield();
     }
 }
 
@@ -47,12 +47,12 @@ void naiveThread(void* param)
 void mutexVerifyThread(void* args)
 {
     MutexCount* p_mtx_cnt = (MutexCount*)args;
-    for(int i = 0; i < 1000; i++)
+    for(int i = 0; i < 500; i++)
     {
         cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_handle);
         *(p_mtx_cnt->p_counter) += 1;
         cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_handle);
-        cs251::thread_yield();
+        // cs251::thread_yield();
     }
     VIDEO_MEMORY[0x40 * 4] += 1;
 }
@@ -72,16 +72,16 @@ void displayThread(void* args)
         VIDEO_MEMORY[0x40 * 2 + 3] = '0' + (val / 1) % 10;
         // VIDEO_MEMORY[0x40 * 2 + 5] = '0' + cs251::schedulerInstance().readyList().size();
         VIDEO_MEMORY[0x40 * 0 + 1] = cs251::schedulerInstance().runningThreadID();
-        int i = 0;
-        for(i = 0; i < 0x40; i++) VIDEO_MEMORY[0x40 * 0 + 2 + i] = 0;
-        i = 0;
-        for(auto it = cs251::schedulerInstance().readyList().begin(); 
-        it != cs251::schedulerInstance().readyList().end(); 
-        it++, i++)
-        {
-            VIDEO_MEMORY[0x40 * 0 + 2 + i] = *it;
-        }
-        cs251::thread_yield();
+        // int i = 0;
+        // for(i = 0; i < 0x40; i++) VIDEO_MEMORY[0x40 * 0 + 2 + i] = 0;
+        // i = 0;
+        // for(auto it = cs251::schedulerInstance().readyList().begin(); 
+        // it != cs251::schedulerInstance().readyList().end(); 
+        // it++, i++)
+        // {
+        //     VIDEO_MEMORY[0x40 * 0 + 2 + i] = *it;
+        // }
+        // cs251::thread_yield();
     }
 }
 
@@ -129,8 +129,8 @@ int main() {
     // scheduler.clearFinishedList();
     cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
     cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
-    cs251::schedulerInstance().create(naiveThread, &display_offsets[2]);
-    cs251::schedulerInstance().create(naiveThread, &display_offsets[3]);
+    // cs251::schedulerInstance().create(naiveThread, &display_offsets[2]);
+    // cs251::schedulerInstance().create(naiveThread, &display_offsets[3]);
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(displayThread, &mtx_cnt);
