@@ -6,6 +6,12 @@
 #include "ecs_list.h"
 #include "ecs_map.h"
 
+#define THREAD_DEBUG
+
+#ifdef THREAD_DEBUG
+#include "uart_printf.h"
+#endif
+
 extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
 extern "C" void disable_interrupts();
 extern "C" void enable_interrupts();
@@ -173,7 +179,11 @@ public:
         id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
 
         ready_list_.push_back(prev_thread_id);
+#ifdef THREAD_DEBUG
+        printf("context switch from %d to %d\n", prev_thread_id, running_thread_id_);
+#endif
         thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
+
     }
 
     void yield()

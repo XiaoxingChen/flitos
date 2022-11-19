@@ -1,4 +1,5 @@
 #include "nanoprintf.h"
+#include "stdint.h"
 
 int printf(const char *format, ...)
 {
@@ -17,3 +18,37 @@ int printf(const char *format, ...)
     }
     return n;
 }
+
+#if defined(__cplusplus)
+extern "C" {
+#endif // __cplusplus
+
+
+uint32_t context_shot[20];
+void printContextSnapshot()
+{
+    uint32_t * addr = context_shot;
+    printf("Context Snapshot\n");
+    printf("ra: 0x%X\n", addr[0]);
+    printf("sp: 0x%X\n", addr[1]);
+    printf("gp: 0x%X\n", addr[2]);
+    printf("tp: 0x%X\n", addr[3]);
+    printf("t0: 0x%X\n", addr[4]);
+    printf("t1: 0x%X\n", addr[5]);
+    printf("t2: 0x%X\n", addr[6]);
+    printf("s0: 0x%X\n", addr[7]);
+    printf("s1: 0x%X\n", addr[8]);
+    printf("a0: 0x%X\n", addr[9]);
+    printf("a1: 0x%X\n", addr[10]);
+    printf("a2: 0x%X\n", addr[11]);
+    printf("a3: 0x%X\n", addr[12]);
+    printf("a4: 0x%X\n", addr[13]);
+    printf("a5: 0x%X\n", addr[14]);
+    
+    printf("mepc: 0x%X\n", addr[15]);
+    printf("mcause: 0x%X\n", addr[16]);
+}
+
+#if defined(__cplusplus)
+}
+#endif // __cplusplus

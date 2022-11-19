@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "utils.h"
 #include "cs251_os.h"
+#include "uart_printf.h"
 
 extern uint8_t _erodata[];
 extern uint8_t _data[];
@@ -85,7 +86,26 @@ void increaseTimeCompare(uint32_t val)
 #ifdef __cplusplus
 extern "C"{
 #endif
+
+void illegalTrap()
+{
+    uint32_t mcause_code;
+    asm volatile ("csrr %0, mcause" : "=r"(mcause_code));
+    
+    if(mcause_code < 20)
+    {
+        printf("===== Segment Fault! =====\n");
+        printContextSnapshot();
+        
+        while(1);
+    }
+}
+
+int context_switch_cnt = 0;
+
 void c_interrupt_handler(void){
+
+    illegalTrap();
     uint32_t timecmp_step = 5000;
     uint64_t curr_timer = readMachineTime();
 
@@ -105,9 +125,7 @@ void c_interrupt_handler(void){
 
     if((UART_MEMORY[5] & 1) && UART_MEMORY[0] == 'a')
     {
-        UART_MEMORY[0] = '#';
-        UART_MEMORY[0] = '0' + global % 10;
-        UART_MEMORY[0] = '\n';
+        printf("Do context switch, seq: %d\n", context_switch_cnt++);
         cs251::schedulerInstance().inInterruptYield();
     }
 #endif

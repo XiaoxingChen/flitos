@@ -1,6 +1,11 @@
 .section .text, "ax"
+.include "context_snapshot.h"
+
 .global _interrupt_handler
+.extern context_shot
 _interrupt_handler:
+    context_snapshot context_shot
+    
     addi	sp,sp,-40
     sw	    ra,36(sp)
     sw	    t0,32(sp)

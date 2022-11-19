@@ -9,7 +9,7 @@ OBJCOPY=$(TOOLPREFIX)objcopy
 OBJDUMP=$(TOOLPREFIX)objdump
 STRIP=$(TOOLPREFIX)strip
 
-INC_DIR = ./include
+INC_DIR = ./src
 SRC_DIR = ./src
 OBJ_DIR = ./obj
 OS_KERNEL_INC_DIR = ../os_kernel/src

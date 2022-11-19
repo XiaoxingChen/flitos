@@ -1,7 +1,12 @@
 .section .text, "ax"
+.include "context_snapshot.h"
 .global _interrupt_handler, context_switch, startFirstTask
+.extern context_shot
 
 context_switch:
+    context_snapshot context_shot
+    call printContextSnapshot 
+    context_project context_shot
     /* csrci   mstatus, 0x8*/ /* disable interrupt */
     addi    sp,sp,-56
     sw      ra,52(sp)
@@ -35,6 +40,10 @@ context_switch:
     lw      a4,4(sp)
     lw      a5,0(sp)
     addi    sp,sp,56
+
+    context_snapshot context_shot
+    call printContextSnapshot
+    context_project context_shot
     /* csrsi   mstatus, 0x8*/ /* enable interrupt */
     ret
 
