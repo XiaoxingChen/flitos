@@ -1,5 +1,6 @@
 #include "nanoprintf.h"
 #include "stdint.h"
+#include "port_riscv.h"
 
 int printf(const char *format, ...)
 {
@@ -24,29 +25,29 @@ extern "C" {
 #endif // __cplusplus
 
 
-uint32_t context_shot[20];
+uint32_t context_shot[context_size];
 void printContextSnapshot()
 {
     uint32_t * addr = context_shot;
     printf("Context Snapshot\n");
-    printf("ra: 0x%X\n", addr[0]);
-    printf("sp: 0x%X\n", addr[1]);
-    printf("gp: 0x%X\n", addr[2]);
-    printf("tp: 0x%X\n", addr[3]);
-    printf("t0: 0x%X\n", addr[4]);
-    printf("t1: 0x%X\n", addr[5]);
-    printf("t2: 0x%X\n", addr[6]);
-    printf("s0: 0x%X\n", addr[7]);
-    printf("s1: 0x%X\n", addr[8]);
-    printf("a0: 0x%X\n", addr[9]);
-    printf("a1: 0x%X\n", addr[10]);
-    printf("a2: 0x%X\n", addr[11]);
-    printf("a3: 0x%X\n", addr[12]);
-    printf("a4: 0x%X\n", addr[13]);
-    printf("a5: 0x%X\n", addr[14]);
+    printf("ra: 0x%X\n", addr[offset_ra]);
+    printf("sp: 0x%X\n", addr[offset_sp]);
+    printf("gp: 0x%X\n", addr[offset_gp]);
+    printf("tp: 0x%X\n", addr[offset_tp]);
+    printf("t0: 0x%X\n", addr[offset_t0]);
+    printf("t1: 0x%X\n", addr[offset_t1]);
+    printf("t2: 0x%X\n", addr[offset_t2]);
+    printf("s0: 0x%X\n", addr[offset_s0]);
+    printf("s1: 0x%X\n", addr[offset_s1]);
+    printf("a0: 0x%X\n", addr[offset_a0]);
+    printf("a1: 0x%X\n", addr[offset_a1]);
+    printf("a2: 0x%X\n", addr[offset_a2]);
+    printf("a3: 0x%X\n", addr[offset_a3]);
+    printf("a4: 0x%X\n", addr[offset_a4]);
+    printf("a5: 0x%X\n", addr[offset_a5]);
     
-    printf("mepc: 0x%X\n", addr[15]);
-    printf("mcause: 0x%X\n", addr[16]);
+    printf("mepc: 0x%X\n", addr[offset_mepc]);
+    printf("mcause: 0x%X\n", addr[offset_mcause]);
 }
 
 #if defined(__cplusplus)
