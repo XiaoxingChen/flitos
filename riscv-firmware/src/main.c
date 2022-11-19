@@ -3,6 +3,7 @@
 #include <string.h>
 #define CS251_OS_STATIC_OBJECTS_ON
 #include "cs251_os.h"
+#include "nanoprintf.h"
 
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
@@ -29,6 +30,7 @@ void threadWaitingForCartridge(void* param)
     while(1){
         if(((*CARTRIDGE) & 0x1) && cartridgeFlag==0){
             cartridgeFlag =1;
+            for(int i = 0; i < 0x40; i++) VIDEO_MEMORY[0x40 * 3 + i] = 0;
             ((FunPtr)((*CARTRIDGE) & 0xFFFFFFFC))();
         }
         cs251::thread_yield();
@@ -36,6 +38,7 @@ void threadWaitingForCartridge(void* param)
 }
 
 int main() {
+    npf_snprintf((char*)&VIDEO_MEMORY[0x40 * 3], 0x40, "Firmware ready, please insert cartridge.");
     disable_interrupts();
     cs251::schedulerInstance().create(idleThread, nullptr);
     cs251::schedulerInstance().create(threadWaitingForCartridge, nullptr);
