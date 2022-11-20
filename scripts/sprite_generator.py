@@ -12,6 +12,18 @@ def colorMap(im, color_idx):
             ret[i,j] = color_idx[tuple(im[i,j])]
     return ret
 
+def generateBattleCity():
+    im_3frames = cv2.imread(script_folder + '/../docs/img/sprite5551.png', cv2.IMREAD_UNCHANGED)
+    # im_3frames = cv2.imread('/home/chenxx/Downloads/sprite.bmp', cv2.IMREAD_UNCHANGED)
+    # print(im_3frames)
+    output_folder = os.path.join(script_folder, '..', 'bin')
+    color_set = set()
+    for i in range(im_3frames.shape[0]):
+        for j in range(im_3frames.shape[1]):
+            color_set.add(tuple(im_3frames[i,j]))
+    palette = list(color_set)
+    print(len(palette))
+
 def generateBird():
     im_3frames = cv2.imread(script_folder + '/../docs/img/flappy.png', cv2.IMREAD_UNCHANGED)
     output_folder = os.path.join(script_folder, '..', 'bin')
@@ -69,5 +81,6 @@ def generateBackground():
 
 if __name__ == "__main__":
     np.set_printoptions(linewidth=100, threshold=np.inf)
-    generateBird()
+    # generateBird()
     # generateBackground()
+    generateBattleCity()
