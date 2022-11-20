@@ -30,8 +30,8 @@ _interrupt_handler:
     lw	    a5,0(sp)
     addi    sp,sp,40
 
-    context_snapshot context_shot
+    /*context_snapshot context_shot
     call printContextSnapshot
-    context_project context_shot
+    context_project context_shot*/
 
     mret

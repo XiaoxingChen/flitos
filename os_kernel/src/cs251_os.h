@@ -7,9 +7,9 @@
 #include "ecs_map.h"
 #include "port_riscv.h"
 
-// #define THREAD_DEBUG
+#define THREAD_DEBUG 0
 
-#ifdef THREAD_DEBUG
+#if THREAD_DEBUG
 #include "uart_printf.h"
 #endif
 
@@ -164,6 +164,9 @@ public:
             finished_list_.push_back(prev_thread_id);
         }
         
+        #if THREAD_DEBUG
+        printf("voluntary context switch from %d to %d\n", prev_thread_id, running_thread_id_);
+        #endif
         thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
         enable_interrupts();
     }
@@ -180,8 +183,8 @@ public:
         id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
 
         ready_list_.push_back(prev_thread_id);
-#ifdef THREAD_DEBUG
-        printf("context switch from %d to %d\n", prev_thread_id, running_thread_id_);
+#if THREAD_DEBUG
+        printf("in interrupt context switch from %d to %d\n", prev_thread_id, running_thread_id_);
 #endif
         thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
 
@@ -255,6 +258,9 @@ public:
                 // deal lock would occur
             }else
             {
+                #if THREAD_DEBUG
+                printf("lock hold by thread: %d, suspend current thread: %d\n", owner_, schedulerInstance().runningThreadID());
+                #endif
                 waiting_list_.push_back(schedulerInstance().runningThreadID());
                 schedulerInstance().suspend();
             }
@@ -262,6 +268,9 @@ public:
         }else
         {
             owner_ = schedulerInstance().runningThreadID();
+            #if THREAD_DEBUG
+            printf("lock acquired by %d\n", owner_);
+            #endif
         }
         enable_interrupts();
     }
@@ -269,6 +278,9 @@ public:
     void unlock()
     {
         disable_interrupts();
+        #if THREAD_DEBUG
+        printf("unlock by thread %d\n", schedulerInstance().runningThreadID());
+        #endif
         if(waiting_list_.empty())
         {
             if(schedulerInstance().runningThreadID() == owner_)
@@ -282,6 +294,9 @@ public:
         }else
         {
             owner_ = waiting_list_.front();
+            #if THREAD_DEBUG
+            printf("wake thread %d as owner\n", owner_);
+            #endif
             waiting_list_.pop_front();
             schedulerInstance().resume(owner_);
         }

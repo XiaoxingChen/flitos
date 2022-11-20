@@ -28,11 +28,23 @@ context_switch:
     csrr    t0, mepc
     sw      t0,15*4(sp) /* write mepc into context */
 
+    csrr    t0, mcause
+    sw      t0,16*4(sp) /* write mcause into context */
+
+    csrr    t0, mstatus
+    sw      t0,17*4(sp) /* write mstatus into context */
+
     sw      sp,0(a0)
     mv      sp,a1
 
     lw      t0,15*4(sp)
     csrw    mepc, t0  /* read mepc from context, write to register */
+
+    lw      t0,16*4(sp)
+    csrw    mcause, t0  /* read mcause from context, write to register */
+
+    lw      t0,17*4(sp)
+    csrw    mstatus, t0  /* read mstatus from context, write to register */
 
     lw      ra,0*4(sp)
     lw      gp,2*4(sp)

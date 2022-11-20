@@ -139,7 +139,7 @@ int main() {
     // cs251::schedulerInstance().create(naiveThread, &display_offsets[2]);
     // cs251::schedulerInstance().create(naiveThread, &display_offsets[3]);
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(displayThread, &mtx_cnt);
     increaseTimeCompare(1000);
     cs251::schedulerInstance().launchFirstTask();

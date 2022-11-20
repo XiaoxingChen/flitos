@@ -44,6 +44,7 @@ TARGET_OBJS =   $(OBJ_DIR)/main.o               \
 				$(OBJ_DIR)/context_switch.o		\
                 $(OBJ_DIR)/startup.o			\
 				$(OBJ_DIR)/utils.o			\
+				$(OBJ_DIR)/printf.o			\
 
 
 all: directories $(BIN_DIR)/$(TARGET_NAME)

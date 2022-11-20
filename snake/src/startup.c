@@ -66,18 +66,30 @@ extern volatile uint32_t controller_status;
 extern "C"{
 #endif
 
+inline uint64_t readMachineTime()
+{
+    uint64_t h1 = MTIME_HIGH;
+    uint64_t l1 = MTIME_LOW;
+    uint64_t h2 = MTIME_HIGH;
+    uint64_t l2 = MTIME_LOW;
+    if(h1 == h2) return ((h1 << 32) | l1);
+    return (h2 << 32) | l2;
+}
+
 int key_cnt = 0;
 void c_interrupt_handler(void){
+    uint64_t curr_timer = readMachineTime();
     uint64_t NewCompare = (((uint64_t)MTIMECMP_HIGH)<<32) | MTIMECMP_LOW;
-    NewCompare += 100;
+    uint64_t timecmp_step = 500;
+    while(NewCompare < curr_timer)
+        NewCompare += timecmp_step;
     MTIMECMP_HIGH = NewCompare>>32;
     MTIMECMP_LOW = NewCompare;
     global++;
     controller_status = CONTROLLER;
 
 #if 1
-    uint64_t curr_timer = (((uint64_t)MTIME_HIGH << 32) | MTIME_LOW);
-    if(NewCompare > curr_timer)
+    if(curr_timer < NewCompare && NewCompare < curr_timer + timecmp_step)
         cs251::schedulerInstance().inInterruptYield();
 #else
     char *VIDEO_MEMORY = (char *)(0x50000000 + 0xFE800);

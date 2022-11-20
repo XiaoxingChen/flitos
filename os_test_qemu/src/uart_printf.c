@@ -48,6 +48,7 @@ void printContextSnapshot()
     
     printf("mepc: 0x%X\n", addr[offset_mepc]);
     printf("mcause: 0x%X\n", addr[offset_mcause]);
+    printf("mstatus: 0x%X\n", addr[offset_mstatus]);
 }
 
 #if defined(__cplusplus)

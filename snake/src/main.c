@@ -3,6 +3,7 @@
 // #include "snake.h"
 #include "cs251_os.h"
 #include <stddef.h>
+#include "nanoprintf.h"
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
 // extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
@@ -14,6 +15,19 @@ void thread_fun(void* arg)
 
 volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
 
+int line_printf(int idx, const char *format, ...)
+{
+    char *VIDEO_MEMORY = (char *)(0x50000000 + 0xFE800);
+    unsigned int buff_len = 0x40;
+    va_list args;
+    int n = buff_len;
+    va_start(args, format);
+	n = npf_vsnprintf(&VIDEO_MEMORY[0x40 * idx], buff_len, format, args);
+	va_end(args);
+
+    return n;
+}
+
 // char VIDEO_MEMORY[0x40 * 30];
 
 void idleThread(void* param)
@@ -22,8 +36,9 @@ void idleThread(void* param)
     int cnt = 0;
     for(int i = 0; i < 1000;)
     {
-        VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
-        // cs251::thread_yield();
+        // VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
+        line_printf(offset, "%d", cnt++);
+        cs251::thread_yield();
     }
 }
 
@@ -52,7 +67,7 @@ void mutexVerifyThread(void* args)
         cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_handle);
         *(p_mtx_cnt->p_counter) += 1;
         cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_handle);
-        // cs251::thread_yield();
+        cs251::thread_yield();
     }
     VIDEO_MEMORY[0x40 * 4] += 1;
 }
@@ -66,12 +81,9 @@ void displayThread(void* args)
         cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_handle);
         val = *(p_mtx_cnt->p_counter);
         cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_handle);
-        VIDEO_MEMORY[0x40 * 2 + 0] = '0' + (val / 1000) % 10;
-        VIDEO_MEMORY[0x40 * 2 + 1] = '0' + (val / 100) % 10;
-        VIDEO_MEMORY[0x40 * 2 + 2] = '0' + (val / 10) % 10;
-        VIDEO_MEMORY[0x40 * 2 + 3] = '0' + (val / 1) % 10;
+        line_printf(2, "shared val: %d", val);
         // VIDEO_MEMORY[0x40 * 2 + 5] = '0' + cs251::schedulerInstance().readyList().size();
-        VIDEO_MEMORY[0x40 * 0 + 1] = cs251::schedulerInstance().runningThreadID();
+        // VIDEO_MEMORY[0x40 * 0 + 1] = cs251::schedulerInstance().runningThreadID();
         // int i = 0;
         // for(i = 0; i < 0x40; i++) VIDEO_MEMORY[0x40 * 0 + 2 + i] = 0;
         // i = 0;
@@ -81,7 +93,7 @@ void displayThread(void* args)
         // {
         //     VIDEO_MEMORY[0x40 * 0 + 2 + i] = *it;
         // }
-        // cs251::thread_yield();
+        cs251::thread_yield();
     }
 }
 
@@ -116,7 +128,7 @@ int main() {
     // }
     // initForIdleThread();
     VIDEO_MEMORY[0x40 * 4] = '0';
-    uint32_t display_offsets[] = {0x40+0,0x40+1,0x40+2,0x40+3};
+    uint32_t display_offsets[] = {0,1,0x40+2,0x40+3};
 
     MutexCount mtx_cnt;
     
@@ -131,6 +143,7 @@ int main() {
     cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     // cs251::schedulerInstance().create(naiveThread, &display_offsets[2]);
     // cs251::schedulerInstance().create(naiveThread, &display_offsets[3]);
+    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(displayThread, &mtx_cnt);
