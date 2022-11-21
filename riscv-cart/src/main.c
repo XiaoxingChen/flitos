@@ -35,7 +35,7 @@ void idleThread(void* param)
     while (1)
     {
         linePrintf(7, "idle thread cnt: 0x%X", cnt++);
-        threadYield();
+        // threadYield();
     }
     
 }

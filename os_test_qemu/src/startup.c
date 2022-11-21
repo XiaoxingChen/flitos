@@ -56,32 +56,14 @@ void init(void){
 
     csr_write_mie(0x888);       // Enable all interrupt soruces
     // csr_enable_interrupts();    // Global interrupt enable
-    MTIMECMP_LOW = 0xffffffff;
-    MTIMECMP_HIGH = 0xffffffff;
+    MTIMECMP_LOW = 1;
+    MTIMECMP_HIGH = 0;
 }
 #ifdef __cplusplus
 }
 #endif
 extern volatile int global;
 extern volatile uint32_t controller_status;
-
-inline uint64_t readMachineTime()
-{
-    uint64_t h1 = MTIME_HIGH;
-    uint64_t l1 = MTIME_LOW;
-    uint64_t h2 = MTIME_HIGH;
-    uint64_t l2 = MTIME_LOW;
-    if(h1 == h2) return ((h1 << 32) | l1);
-    return (h2 << 32) | l2;
-}
-
-void increaseTimeCompare(uint32_t val)
-{
-    uint64_t NewCompare = readMachineTime();
-    NewCompare += val;
-    MTIMECMP_HIGH = NewCompare>>32;
-    MTIMECMP_LOW = NewCompare;
-}
 
 #ifdef __cplusplus
 extern "C"{
@@ -106,19 +88,20 @@ int context_switch_cnt = 0;
 void c_interrupt_handler(void){
 
     illegalTrap();
-    uint32_t timecmp_step = 5000;
-    uint64_t curr_timer = readMachineTime();
+    // uint32_t timecmp_step = 5000;
+    // uint64_t curr_timer = readMachineTime();
 
-    uint64_t NewCompare = (((uint64_t)MTIMECMP_HIGH)<<32) | MTIMECMP_LOW;
-    while (NewCompare < curr_timer)
-        NewCompare += timecmp_step;
-    MTIMECMP_HIGH = NewCompare>>32;
-    MTIMECMP_LOW = NewCompare;
+    // uint64_t NewCompare = (((uint64_t)MTIMECMP_HIGH)<<32) | MTIMECMP_LOW;
+    // while (NewCompare <= curr_timer)
+    //     NewCompare += timecmp_step;
+    // MTIMECMP_HIGH = NewCompare>>32;
+    // MTIMECMP_LOW = NewCompare;
+    increaseTimeCompare(5000);
     global++;
     controller_status = CONTROLLER;
 #if 1
-    if(curr_timer < NewCompare && NewCompare < curr_timer + timecmp_step)
-        cs251::schedulerInstance().inInterruptYield();
+    // if(curr_timer < NewCompare && NewCompare < curr_timer + timecmp_step)
+    cs251::schedulerInstance().inInterruptYield();
 #else
 
     char * UART_MEMORY = (char*)(0x10000000);

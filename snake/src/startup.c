@@ -81,7 +81,7 @@ void c_interrupt_handler(void){
     uint64_t curr_timer = readMachineTime();
     uint64_t NewCompare = (((uint64_t)MTIMECMP_HIGH)<<32) | MTIMECMP_LOW;
     uint64_t timecmp_step = 500;
-    while(NewCompare < curr_timer)
+    while(NewCompare <= curr_timer)
         NewCompare += timecmp_step;
     MTIMECMP_HIGH = NewCompare>>32;
     MTIMECMP_LOW = NewCompare;

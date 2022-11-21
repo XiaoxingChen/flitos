@@ -1,9 +1,6 @@
 #include <stdint.h>
 #include <string.h>
-
-namespace cs251{
-    int thread_yield();
-}
+#include "cs251_os.h"
 
 
 uint32_t* regAddrFromMemHandle(uint32_t mem_handle)

@@ -21,7 +21,7 @@ BIN_DIR = ./bin
 DEBUG_MODE=TRUE
 
 ifdef DEBUG_MODE
-DEFINES  += -DDEBUG
+DEFINES  += -DDEBUG -DVIRT_CLINT
 CFLAGS   += -O0 -g -ggdb
 #LDFLAGS  += -Wl,-no_pie
 else

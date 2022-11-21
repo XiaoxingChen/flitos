@@ -110,7 +110,7 @@ int cnt_var = 0;
 int finish_cnt = 0;
 
 int main() {
-    increaseTimeCompare(0);
+    // increaseTimeCompare(0);
     
     int last_global = 42;
     
@@ -141,7 +141,7 @@ int main() {
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(displayThread, &mtx_cnt);
-    increaseTimeCompare(1000);
+    // increaseTimeCompare(1000);
     cs251::schedulerInstance().launchFirstTask();
 
     while (1) ;

@@ -21,8 +21,9 @@ void wrThreadYield()
     asm volatile ("mv gp, %0" : : "r"(cartridge_global_pointer));
     // unload global pointer
 }
-
+#if 0
 void threadYield()
 {
     wrThreadYield();
 }
+#endif

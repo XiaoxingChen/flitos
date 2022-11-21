@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "include/timer.h"
 #include "cs251_os.h"
+#include "utils.h"
 
 extern uint8_t _erodata[];
 extern uint8_t _data[];
@@ -10,7 +11,7 @@ extern uint8_t _esdata[];
 extern uint8_t _bss[];
 extern uint8_t _ebss[];
 extern uint8_t __global_pointer$[];
-
+#if 0
 // Adapted from https://stackoverflow.com/questions/58947716/how-to-interact-with-risc-v-csrs-by-using-gcc-c-code
 __attribute__((always_inline)) inline uint32_t
 
@@ -35,6 +36,7 @@ __attribute__((always_inline)) inline void csr_enable_interrupts(void) {
 __attribute__((always_inline)) inline void csr_disable_interrupts(void) {
     asm volatile ("csrci mstatus, 0x8");
 }
+#endif
 
 #define INTRPT_PENDING  (*((volatile uint32_t *)0x40000004))
 #define MTIME_LOW       (*((volatile uint32_t *)0x40000008))
@@ -62,9 +64,9 @@ void init(void) {
     }
 
     csr_write_mie(0x888);       // Enable all interrupt soruces
-    csr_enable_interrupts();    // Global interrupt enable
-    MTIMECMP_LOW = MTIME_LOW;
-    MTIMECMP_HIGH = MTIME_HIGH;
+    // csr_enable_interrupts();    // Global interrupt enable
+    MTIMECMP_LOW = 1;
+    MTIMECMP_HIGH = 0;
 }
 
 #ifdef __cplusplus
@@ -77,15 +79,6 @@ extern volatile char *VIDEO_MEMORY;
 extern volatile int vip_seq;
 extern volatile int cmd_seq;
 
-void increase_timer() {
-    uint64_t
-    NewCompare = (((uint64_t)MTIMECMP_HIGH) << 32) | MTIMECMP_LOW;
-    NewCompare += 100;
-    MTIMECMP_LOW = NewCompare;
-    MTIMECMP_HIGH = NewCompare >> 32;
-
-}
-
 #ifdef __cplusplus
 extern "C"{
 #endif
@@ -96,9 +89,10 @@ void c_interrupt_handler(uint32_t mcause) {
     controller_status = CONTROLLER;
 
     if(flag){
-        increase_timer();
+        increaseTimeCompare(100);
     }
     // increase_timer();
+    
 
     if((INTRPT_PENDING & 0x2) > 0)
     {
@@ -110,6 +104,7 @@ void c_interrupt_handler(uint32_t mcause) {
         INTRPT_PENDING &= 0x4;
         cmd_seq++;
     }
+    cs251::schedulerInstance().inInterruptYield();
 }
 
 #ifdef __cplusplus
@@ -156,7 +151,7 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
     }
     else if(call == 11)
     {
-        // cs251::thread_yield();
+        cs251::schedulerInstance().inInterruptYield();
     }else if(call == 12)
     {
         return (uint32_t)__global_pointer$;

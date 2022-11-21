@@ -18,7 +18,6 @@ extern "C" void disable_interrupts();
 extern "C" void enable_interrupts();
 extern "C" void startFirstTask( uint32_t stk_ptr );
 extern "C" uint8_t __global_pointer$[];
-void increaseTimeCompare(uint32_t val);
 
 
 namespace cs251

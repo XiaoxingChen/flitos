@@ -15,6 +15,7 @@ void thread_fun(void* arg)
 
 volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
 
+#if 0
 int line_printf(int idx, const char *format, ...)
 {
     char *VIDEO_MEMORY = (char *)(0x50000000 + 0xFE800);
@@ -27,6 +28,7 @@ int line_printf(int idx, const char *format, ...)
 
     return n;
 }
+#endif
 
 // char VIDEO_MEMORY[0x40 * 30];
 
