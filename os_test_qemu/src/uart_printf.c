@@ -1,6 +1,7 @@
 #include "nanoprintf.h"
 #include "stdint.h"
 #include "port_riscv.h"
+#include "utils.h"
 
 int printf(const char *format, ...)
 {

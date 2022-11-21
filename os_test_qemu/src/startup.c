@@ -86,7 +86,7 @@ void illegalTrap()
 int context_switch_cnt = 0;
 
 void c_interrupt_handler(void){
-
+    *nestCriticalCount() += 1;
     illegalTrap();
     // uint32_t timecmp_step = 5000;
     // uint64_t curr_timer = readMachineTime();
@@ -112,6 +112,7 @@ void c_interrupt_handler(void){
         cs251::schedulerInstance().inInterruptYield();
     }
 #endif
+    *nestCriticalCount() -= 1;
 }
 #ifdef __cplusplus
 }

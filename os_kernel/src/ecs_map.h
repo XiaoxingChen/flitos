@@ -30,16 +30,16 @@ public:
     using iterator = typename list<PairType>::iterator;
     using const_iterator = typename list<PairType>::const_iterator;
 
-    PairType& at(const TKey& key)
+    TValue& at(const TKey& key)
     {
-        PairType ret;
+        TValue ret;
         typename list<PairType>::iterator it = find_if(storage_.begin(), storage_.end(), 
             [&key](const PairType& kv) { return kv.first == key; });
-        assert(it != storage_.end());
-        return *it;
+        // assert(it != storage_.end());
+        return it->second;
     }
 
-    const PairType& at(const TKey& key) const
+    const TValue& at(const TKey& key) const
     {
         return const_cast<map<TKey, TValue>*>(this)->at(key);
     }

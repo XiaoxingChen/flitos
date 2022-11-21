@@ -7,11 +7,12 @@
 #include "ecs_map.h"
 #include "port_riscv.h"
 
-#define THREAD_DEBUG 0
-
-#if THREAD_DEBUG
+#if defined(VIRT_CLINT)
 #include "uart_printf.h"
-#endif
+#else
+#define LOGD(...) while(0)
+#endif // VIRT_CLINT
+
 
 extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
 extern "C" void disable_interrupts();
@@ -38,9 +39,12 @@ using mutex_id_t = int;
 
 class ThreadControlBlock;
 class ThreadScheduler;
+class MutexFactory;
+
 void stub_wrapper(void (*f)(void*), void* arg);
 void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb);
 inline ThreadScheduler& schedulerInstance();
+inline MutexFactory& mutexFactoryInstance();
 
 
 class ThreadControlBlock
@@ -60,7 +64,7 @@ public:
         *(stack_ptr_ + static_cast<size_t>(offset_ra)) = reinterpret_cast<size_t>(stub_wrapper);
         *(stack_ptr_ + static_cast<size_t>(offset_gp)) = reinterpret_cast<size_t>(__global_pointer$);
     }
-
+#if 0
     void init(void (*f)(void*), void* arg)
     {
         // thread_id_ = threadCounter();
@@ -74,6 +78,9 @@ public:
         *(stack_ptr_ + static_cast<size_t>(offset_a0)) = reinterpret_cast<size_t>(f);
         state_ = ThreadState::eREADY;
     }
+#else
+    void init(void (*f)(void*), void* arg);
+#endif
 
     ~ThreadControlBlock()
     {
@@ -89,6 +96,8 @@ public:
     //     return thread_counter;
     // }
 
+    mutex_id_t mutexForJoin() const { return mtx_for_join_; }
+
 private:
     
     // thread_id_t thread_id_ = 0;
@@ -97,6 +106,7 @@ private:
     size_t* stack_ptr_ = nullptr;
     void* program_counter_ = nullptr;
     ThreadState state_ = eINIT;
+    mutex_id_t mtx_for_join_ = -1;
 };
 
 
@@ -120,6 +130,7 @@ public:
         id_tcb_map_[id] = ThreadControlBlock();
         id_tcb_map_[id].init(f, arg);
         ready_list_.push_back(id);
+        LOGD("create thread: %d\n", id);
         return id;
     }
 
@@ -131,6 +142,7 @@ public:
 
         id_tcb_map_[chosen_id].setState(ThreadState::eRUNNING);
         running_thread_id_ = chosen_id;
+        setPreemption(true);
         startFirstTask((uint32_t) (id_tcb_map_[chosen_id].sp()));
     }
 
@@ -140,7 +152,7 @@ public:
         // involuntary context switch 
         // could generate race condition.
         // Therefore disable interrupts here.
-        disable_interrupts();
+        setPreemption(false);
         
         if(state != ThreadState::eREADY 
         && state != ThreadState::eWAITING
@@ -163,15 +175,16 @@ public:
             finished_list_.push_back(prev_thread_id);
         }
         
-        #if THREAD_DEBUG
-        printf("voluntary context switch from %d to %d\n", prev_thread_id, running_thread_id_);
-        #endif
+        LOGD("voluntary context switch from %d to %d\n", prev_thread_id, running_thread_id_);
+        disable_interrupts();
         thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
         enable_interrupts();
+        setPreemption(true);
     }
 
     void inInterruptYield()
     {
+        if(!preemption_on_) return;
         if(ready_list_.empty()) return; // running thread is idel spin thread
 
         thread_id_t prev_thread_id = running_thread_id_;
@@ -182,11 +195,11 @@ public:
         id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
 
         ready_list_.push_back(prev_thread_id);
-#if THREAD_DEBUG
-        printf("in interrupt context switch from %d to %d\n", prev_thread_id, running_thread_id_);
-#endif
+        LOGD("in interrupt context switch from %d to %d\n", prev_thread_id, running_thread_id_);
         thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
 
+        // come back from other thread
+        schedulerInstance().setPreemption(true);
     }
 
     void yield()
@@ -208,6 +221,14 @@ public:
         }
     }
 
+    void join( thread_id_t tid );
+
+    void setPreemption(bool val) 
+    {
+        LOGD("thread %d set preemtion to %d\n",runningThreadID(), val); 
+        preemption_on_ = val; 
+    }
+
 
     void exit()
     {
@@ -217,7 +238,9 @@ public:
     thread_id_t runningThreadID() const { return running_thread_id_; }
 
     const ecs::list<thread_id_t>& readyList() const { return ready_list_; }
+    const ecs::map<thread_id_t, ThreadControlBlock>& idTcbMap() const { return id_tcb_map_; }
 private:
+    bool preemption_on_ = false;
     thread_id_t running_thread_id_ = 0;
     size_t thread_counter_ = 0;
     ecs::list<thread_id_t> ready_list_;
@@ -233,7 +256,7 @@ public:
     bool try_lock()
     {
         bool ret = true;
-        disable_interrupts();
+        schedulerInstance().setPreemption(false);
         if(isLocked())
         {
             ret = false;
@@ -242,13 +265,13 @@ public:
             owner_ = schedulerInstance().runningThreadID();
             ret = true;
         }
-        enable_interrupts();
+        schedulerInstance().setPreemption(true);
         return ret;
     }
 
     void lock()
     {
-        disable_interrupts();
+        schedulerInstance().setPreemption(false);
         if(isLocked())
         {
             if(schedulerInstance().runningThreadID() == owner_)
@@ -257,9 +280,7 @@ public:
                 // deal lock would occur
             }else
             {
-                #if THREAD_DEBUG
-                printf("lock hold by thread: %d, suspend current thread: %d\n", owner_, schedulerInstance().runningThreadID());
-                #endif
+                LOGD("lock hold by thread: %d, suspend current thread: %d\n", owner_, schedulerInstance().runningThreadID());
                 waiting_list_.push_back(schedulerInstance().runningThreadID());
                 schedulerInstance().suspend();
             }
@@ -267,19 +288,15 @@ public:
         }else
         {
             owner_ = schedulerInstance().runningThreadID();
-            #if THREAD_DEBUG
-            printf("lock acquired by %d\n", owner_);
-            #endif
+            LOGD("lock acquired by %d\n", owner_);
         }
-        enable_interrupts();
+        schedulerInstance().setPreemption(true);
     }
 
     void unlock()
     {
-        disable_interrupts();
-        #if THREAD_DEBUG
-        printf("unlock by thread %d\n", schedulerInstance().runningThreadID());
-        #endif
+        schedulerInstance().setPreemption(false);
+        LOGD("unlock by thread %d\n", schedulerInstance().runningThreadID());
         if(waiting_list_.empty())
         {
             if(schedulerInstance().runningThreadID() == owner_)
@@ -293,13 +310,11 @@ public:
         }else
         {
             owner_ = waiting_list_.front();
-            #if THREAD_DEBUG
-            printf("wake thread %d as owner\n", owner_);
-            #endif
+            LOGD("wake thread %d as owner\n", owner_);
             waiting_list_.pop_front();
             schedulerInstance().resume(owner_);
         }
-        enable_interrupts();
+        schedulerInstance().setPreemption(true);
     }
 private:
     bool isLocked() { return owner_ >= 0; }
@@ -322,9 +337,15 @@ public:
     {
         mtx_map_.erase(mtx_id);
     }
-    void lock(mutex_id_t id) { mtx_map_[id].lock(); }
+    void lock(mutex_id_t id) 
+    {
+        mtx_map_[id].lock(); 
+    }
     void try_lock(mutex_id_t id) { mtx_map_[id].try_lock(); }
-    void unlock(mutex_id_t id) { mtx_map_[id].unlock(); }
+    void unlock(mutex_id_t id) 
+    { 
+        mtx_map_[id].unlock(); 
+    }
 private:
     mutex_id_t seq_id_ = 0;
     ecs::map<mutex_id_t, MutexInternal> mtx_map_; 
@@ -367,6 +388,9 @@ inline void stub_wrapper(void (*f)(void*), void* arg)
     // increaseTimeCompare(1000);
     enable_interrupts();
     (*f)(arg);
+    
+    mutex_id_t mtx_for_join = schedulerInstance().idTcbMap().at(schedulerInstance().runningThreadID()).mutexForJoin();
+    mutexFactoryInstance().unlock( mtx_for_join );
     thread_exit();
 }
 
@@ -380,7 +404,31 @@ inline int thread_yield()
 {
     schedulerInstance().yield();
     return 0;
-} 
+}
+
+inline void ThreadControlBlock::init(void (*f)(void*), void* arg)
+{
+    // thread_id_ = threadCounter();
+    stk_size_ = INITIAL_STACK_SIZE;
+    stk_mem_ = (uint8_t*)malloc(INITIAL_STACK_SIZE);
+    stack_ptr_ = reinterpret_cast<size_t*>(stk_mem_ + INITIAL_STACK_SIZE) - 1; //todo
+    program_counter_ = reinterpret_cast<void*>(stub_wrapper);
+
+    pushDummySwitchFrame();
+    *(stack_ptr_ + static_cast<size_t>(offset_a1)) = reinterpret_cast<size_t>(arg);
+    *(stack_ptr_ + static_cast<size_t>(offset_a0)) = reinterpret_cast<size_t>(f);
+    state_ = ThreadState::eREADY;
+
+    mtx_for_join_ = mutexFactoryInstance().create();
+    mutexFactoryInstance().lock(mtx_for_join_);
+}
+
+inline void ThreadScheduler::join( thread_id_t tid )
+{
+    mutex_id_t mtx_for_join = id_tcb_map_[tid].mutexForJoin();
+    mutexFactoryInstance().lock(mtx_for_join);
+    mutexFactoryInstance().unlock(mtx_for_join);
+}
 
 #ifdef CS251_OS_STATIC_OBJECTS_ON
 void* g_scheduler_ = nullptr;

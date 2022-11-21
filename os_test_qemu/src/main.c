@@ -136,14 +136,14 @@ int main() {
     disable_interrupts();
     cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
     cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
-    // cs251::schedulerInstance().create(naiveThread, &display_offsets[2]);
+    
     // cs251::schedulerInstance().create(naiveThread, &display_offsets[3]);
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(displayThread, &mtx_cnt);
     // increaseTimeCompare(1000);
+    
     cs251::schedulerInstance().launchFirstTask();
-
     while (1) ;
     
     return 0;

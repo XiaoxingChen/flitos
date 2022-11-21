@@ -5,14 +5,31 @@
 extern "C" {
 #endif // __cplusplus
 
+int32_t nest_critical_cnt;
+
+int32_t* nestCriticalCount()
+{
+    return &nest_critical_cnt;
+}
+
 void enable_interrupts()
 {
-    csr_enable_interrupts();
+    (*nestCriticalCount())--;
+    if(*nestCriticalCount() <= 0)
+    {
+        *nestCriticalCount() = 0;
+        csr_enable_interrupts();
+    }
 }
 
 void disable_interrupts()
 {
-    csr_disable_interrupts();
+    if(*nestCriticalCount() <= 0)
+    {
+        *nestCriticalCount() = 0;
+        csr_disable_interrupts();
+    }
+    (*nestCriticalCount())++;
 }
 
 int line_printf(int idx, const char *format, ...)

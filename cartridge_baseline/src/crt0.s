@@ -16,9 +16,11 @@ _start:
     
 
 .section .text, "ax"
-.global getTicks, getStatus, getVideoInterruptSeq, hookFunction, getCmdInterruptSeq, registerHandler, threadCreate, threadYield, getGlobalPointer
+.global getTicks, getStatus, getVideoInterruptSeq, hookFunction, getCmdInterruptSeq, registerHandler, getGlobalPointer
 .global writeTargetMem, writeTarget
 .global mutexInit, mutexDestroy
+.global threadCreate, threadYield, threadJoin
+
 getTicks:
     li a5, 0
     ecall
@@ -63,5 +65,8 @@ mutexAcquire:
     ecall
 mutexRelease:
     li a5, 16
+    ecall
+threadJoin:
+    li a5, 17
     ecall
 .end

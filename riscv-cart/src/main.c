@@ -31,10 +31,10 @@ void threadGraphics(void* param);
 
 void idleThread(void* param)
 {
-    uint8_t cnt = 0;
+    int cnt = 0;
     while (1)
     {
-        linePrintf(7, "idle thread cnt: 0x%X", cnt++);
+        linePrintf(7, "app idle thread cnt: %d", cnt++);
         // threadYield();
     }
     
@@ -56,9 +56,13 @@ void threadCommandButtonMonitor(void* param)
 int main() {
 
     initVideoSetting();
-    threadCreate(idleThread, NULL);
-    threadCreate(threadGraphics, NULL);
-    threadCreate(threadCommandButtonMonitor, NULL);
+    thread_id_t th1 = threadCreate(idleThread, NULL);
+    thread_id_t th2 = threadCreate(threadGraphics, NULL);
+    thread_id_t th3 = threadCreate(threadCommandButtonMonitor, NULL);
+
+    // threadJoin(th1);
+    // threadJoin(th2);
+    // threadJoin(th3);
     
     while(1) threadYield();
     return 0;

@@ -73,6 +73,8 @@ inline void increaseTimeCompare(uint32_t timecmp_step) {
 
 int line_printf(int idx, const char *format, ...);
 
+int32_t *nestCriticalCount();
+
 #if defined(__cplusplus)
 }
 #endif // __cplusplus
