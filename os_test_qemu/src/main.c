@@ -3,6 +3,7 @@
 #include "uart_printf.h"
 #include "cs251_os.h"
 #include <stddef.h>
+#include "thread_api.h"
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
 // extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
@@ -50,7 +51,7 @@ void naiveThread(void* param)
 void mutexVerifyThread(void* args)
 {
     MutexCount* p_mtx_cnt = (MutexCount*)args;
-    for(int i = 0; i < 1000; i++)
+    for(int i = 0; i < 100; i++)
     {
         cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_counter);
         *(p_mtx_cnt->p_counter) += 1;
@@ -65,6 +66,11 @@ void displayThread(void* args)
     MutexCount* p_mtx_cnt = (MutexCount*)args;
     int val = 0; 
     int last_val = 0;
+
+    // threadJoin(3);
+    // cs251::schedulerInstance().join(3);
+
+    
     while(1)
     {
         cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_counter);

@@ -118,3 +118,37 @@ void c_interrupt_handler(void){
 }
 #endif
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t call){
+    *nestCriticalCount() += 1;
+
+if(call == 13)
+    {
+        return (uint32_t)cs251::mutexFactoryInstance().create();
+    }else if(call == 14)
+    {
+        cs251::mutexFactoryInstance().destroy(a0);
+    }
+    else if(call == 15)
+    {
+        // not tested
+        cs251::mutexFactoryInstance().lock(a0);
+    }else if(call == 16)
+    {
+        // not tested
+        cs251::mutexFactoryInstance().unlock(a0);
+    }else if(call == 17)
+    {
+        cs251::schedulerInstance().join(a0);
+    }
+
+    *nestCriticalCount() -= 1;
+    return -1;
+}
+#ifdef __cplusplus
+}
+#endif
+
+

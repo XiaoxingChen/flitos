@@ -5,6 +5,12 @@
 .extern context_shot
 _interrupt_handler:
     context_snapshot context_shot
+
+    csrw    mscratch,ra
+    csrr    ra,mcause
+    addi    ra,ra,-11
+    beqz    ra,_system_call
+    csrr    ra,mscratch
     
     addi	sp,sp,-40
     sw	    ra,36(sp)
@@ -34,4 +40,16 @@ _interrupt_handler:
     call printContextSnapshot
     context_project context_shot*/
 
+    mret
+
+_system_call:
+    csrr    ra,mscratch
+    csrw    mepc,ra
+    /*csrw    mscratch,gp*/
+    .option push
+    .option norelax
+    /*la gp, __global_pointer$*/
+    .option pop
+    call    c_system_call
+    /*csrr    gp,mscratch*/
     mret

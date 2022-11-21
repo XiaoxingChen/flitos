@@ -2,6 +2,10 @@
 #define _THREAD_API_H_
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 typedef int thread_id_t;
 typedef int mutex_id_t;
 
@@ -12,5 +16,9 @@ mutex_id_t mutexInit();
 void mutexDestroy(mutex_id_t mtx_id);
 void mutexAcquire(mutex_id_t mtx_id);
 void mutexRelease(mutex_id_t mtx_id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _THREAD_API_H_

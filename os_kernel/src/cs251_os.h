@@ -419,15 +419,15 @@ inline void ThreadControlBlock::init(void (*f)(void*), void* arg)
     *(stack_ptr_ + static_cast<size_t>(offset_a0)) = reinterpret_cast<size_t>(f);
     state_ = ThreadState::eREADY;
 
-    mtx_for_join_ = mutexFactoryInstance().create();
-    mutexFactoryInstance().lock(mtx_for_join_);
+    // mtx_for_join_ = mutexFactoryInstance().create();
+    // mutexFactoryInstance().lock(mtx_for_join_);
 }
 
 inline void ThreadScheduler::join( thread_id_t tid )
 {
-    mutex_id_t mtx_for_join = id_tcb_map_[tid].mutexForJoin();
-    mutexFactoryInstance().lock(mtx_for_join);
-    mutexFactoryInstance().unlock(mtx_for_join);
+    // mutex_id_t mtx_for_join = id_tcb_map_[tid].mutexForJoin();
+    // mutexFactoryInstance().lock(mtx_for_join);
+    // mutexFactoryInstance().unlock(mtx_for_join);
 }
 
 #ifdef CS251_OS_STATIC_OBJECTS_ON

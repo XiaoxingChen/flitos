@@ -15,4 +15,33 @@ _start:
     nop
     jal zero, main
     .cfi_endproc
-    .end
+
+.section .text, "ax"
+.global mutexInit, mutexDestroy
+.global threadCreate, threadYield, threadJoin
+  
+threadCreate:
+    li a5, 10
+    ecall
+threadYield:
+    li a5, 11
+    ecall  
+getGlobalPointer:
+    li a5, 12
+    ecall
+mutexInit:
+    li a5, 13
+    ecall
+mutexDestroy:
+    li a5, 14
+    ecall
+mutexAcquire:
+    li a5, 15
+    ecall
+mutexRelease:
+    li a5, 16
+    ecall
+threadJoin:
+    li a5, 17
+    ecall
+.end
