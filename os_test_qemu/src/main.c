@@ -5,6 +5,10 @@
 #include "cs251_os.h"
 #include <stddef.h>
 #include "thread_api.h"
+
+#define THREAD_SAFE_PRINT_IMPLEMENTATION
+#include "thread_safe_print.h"
+
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
 // extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
@@ -148,6 +152,7 @@ int main() {
 
     // scheduler.clearFinishedList();
     disable_interrupts();
+    // cs251::initConsoleThread();
     cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
     cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     

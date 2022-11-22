@@ -12,11 +12,11 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <cstring>
-
+#include "ecs_traits.h"
 namespace ecs
 {
 
-size_t findMemSize(size_t val)
+inline size_t findMemSize(size_t val)
 {
     size_t ret = 1;
     while(ret < val) ret <<= 1;
@@ -44,6 +44,39 @@ private:
 public:
     vector(){};
     vector(size_t n) { resize(n); };
+
+    void swap(vector& rhs)
+    {
+        size_t tmp;
+        tmp = rhs.size_;
+        rhs.size_ = size_;
+        size_ = tmp;
+
+        tmp = rhs.cap_;
+        rhs.cap_ = cap_;
+        cap_ = tmp;
+
+        T* tmp_mem;
+        tmp_mem = rhs.mem_;
+        rhs.mem_ = mem_;
+        mem_ = tmp_mem;
+    }
+
+    vector(vector&& rhs)
+    {
+        swap(rhs);
+    }
+
+    void operator = (vector&& rhs)
+    {
+        swap(rhs);
+    }
+
+    vector(const vector& rhs)
+    {
+        resize(rhs.size());
+        for(size_t i = 0; i < rhs.size(); i++) at(i) = rhs.at(i);
+    }
 
     void reserve(size_t n) { reallocateMemory(n); }
     size_t capacity() const { return cap_; }

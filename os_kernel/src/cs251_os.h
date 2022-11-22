@@ -203,7 +203,11 @@ public:
         id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
 
         ready_list_.push_back(prev_thread_id);
-        LOGD("in interrupt context switch from %d to %d\n", prev_thread_id, running_thread_id_);
+        LOGD("preemptive context switch from %d to %d. ready_list_: ", prev_thread_id, running_thread_id_);
+        for(auto it = ready_list_.begin(); it != ready_list_.end(); it++)
+        {
+            LOGD("%d ", *it);
+        }LOGD("\n");
         thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
 
         // come back from other thread

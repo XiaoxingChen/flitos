@@ -76,7 +76,7 @@ void illegalTrap()
     
     if(mcause_code < 20)
     {
-        printf("===== Segment Fault! =====\n");
+        raw_printf("===== Segment Fault! =====\n");
         printContextSnapshot();
         
         while(1);
