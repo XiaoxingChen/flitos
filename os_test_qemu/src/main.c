@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "uart_printf.h"
+#define CS251_OS_STATIC_OBJECTS_ON
 #include "cs251_os.h"
 #include <stddef.h>
 #include "thread_api.h"
@@ -33,6 +34,7 @@ struct MutexCount
 {
     int mtx_counter;
     int mtx_finish;
+    int cond_counter;
     int* p_counter;
     int* p_finish_cnt;
 };
@@ -44,6 +46,7 @@ void naiveThread(void* param)
     for(int i = 0; i < 1000;i++)
     {
         VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
+        // cs251::thread_yield();
     }
     VIDEO_MEMORY[offset] = '#';
 }
@@ -51,11 +54,12 @@ void naiveThread(void* param)
 void mutexVerifyThread(void* args)
 {
     MutexCount* p_mtx_cnt = (MutexCount*)args;
-    for(int i = 0; i < 100; i++)
+    for(int i = 0; i < 1000; i++)
     {
         cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_counter);
         *(p_mtx_cnt->p_counter) += 1;
         cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_counter);
+        cs251::condFactoryInstance().notifyOne(p_mtx_cnt->cond_counter);
         // cs251::thread_yield();
     }
     *(p_mtx_cnt->p_finish_cnt) += 1;
@@ -74,9 +78,12 @@ void displayThread(void* args)
     while(1)
     {
         cs251::mutexFactoryInstance().lock(p_mtx_cnt->mtx_counter);
+        while(*(p_mtx_cnt->p_counter) == last_val)
+        {
+            cs251::condFactoryInstance().wait(p_mtx_cnt->cond_counter, p_mtx_cnt->mtx_counter);
+        }
         val = *(p_mtx_cnt->p_counter);
         cs251::mutexFactoryInstance().unlock(p_mtx_cnt->mtx_counter);
-        if (val != last_val)
         {
             printf("cnt: %d\n", val);
             last_val = val;
@@ -107,8 +114,8 @@ void increaseTimeCompare(uint32_t val);
 
 namespace cs251
 {
-    void* g_scheduler_ = nullptr;
-    void* g_mutex_factory = nullptr;
+    // void* g_scheduler_ = nullptr;
+    // void* g_mutex_factory = nullptr;
 } // namespace cs251
 // ecs::map<int, int> a;
 
@@ -127,7 +134,7 @@ int main() {
     // }
     // initForIdleThread();
     VIDEO_MEMORY[0x40 * 4] = '0';
-    printf("Hello world\n");
+    printf("\n\n\n\n\n\n\n\n=== CS251 OS START! === \n\n\n\n\n\n\n\n");
 
     uint32_t display_offsets[] = {0x40+0,0x40+1,0x40+2,0x40+3};
 
@@ -137,6 +144,7 @@ int main() {
     mtx_cnt.p_finish_cnt = &finish_cnt;
     // mtx_cnt.p_counter = (int*)VIDEO_MEMORY;
     mtx_cnt.mtx_counter = cs251::mutexFactoryInstance().create();
+    mtx_cnt.cond_counter = cs251::condFactoryInstance().create();
 
     // scheduler.clearFinishedList();
     disable_interrupts();

@@ -6,6 +6,7 @@
 #include "ecs_list.h"
 #include "ecs_map.h"
 #include "port_riscv.h"
+#include "ecs_assert.h"
 
 #if defined(VIRT_CLINT)
 #include "uart_printf.h"
@@ -36,6 +37,7 @@ enum ThreadState
 constexpr size_t INITIAL_STACK_SIZE = 0x1000;
 using thread_id_t = int;
 using mutex_id_t = int;
+using cond_id_t = int;
 
 class ThreadControlBlock;
 class ThreadScheduler;
@@ -163,6 +165,7 @@ public:
         thread_id_t prev_thread_id = running_thread_id_;
         running_thread_id_ = ready_list_.front();
         ready_list_.pop_front();
+        assert(prev_thread_id != running_thread_id_);
 
         id_tcb_map_[prev_thread_id].setState(state);
         id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
@@ -175,7 +178,12 @@ public:
             finished_list_.push_back(prev_thread_id);
         }
         
-        LOGD("voluntary context switch from %d to %d\n", prev_thread_id, running_thread_id_);
+        LOGD("voluntary context switch from %d to %d. ready_list_: ", prev_thread_id, running_thread_id_);
+        for(auto it = ready_list_.begin(); it != ready_list_.end(); it++)
+        {
+            LOGD("%d ", *it);
+        }LOGD("\n");
+
         disable_interrupts();
         thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
         enable_interrupts();
@@ -225,7 +233,7 @@ public:
 
     void setPreemption(bool val) 
     {
-        LOGD("thread %d set preemtion to %d\n",runningThreadID(), val); 
+        // LOGD("thread %d set preemtion to %d\n",runningThreadID(), val); 
         preemption_on_ = val; 
     }
 
@@ -280,7 +288,7 @@ public:
                 // deal lock would occur
             }else
             {
-                LOGD("lock hold by thread: %d, suspend current thread: %d\n", owner_, schedulerInstance().runningThreadID());
+                // LOGD("lock hold by thread: %d, suspend current thread: %d\n", owner_, schedulerInstance().runningThreadID());
                 waiting_list_.push_back(schedulerInstance().runningThreadID());
                 schedulerInstance().suspend();
             }
@@ -288,7 +296,7 @@ public:
         }else
         {
             owner_ = schedulerInstance().runningThreadID();
-            LOGD("lock acquired by %d\n", owner_);
+            // LOGD("lock acquired by %d\n", owner_);
         }
         schedulerInstance().setPreemption(true);
     }
@@ -296,7 +304,7 @@ public:
     void unlock()
     {
         schedulerInstance().setPreemption(false);
-        LOGD("unlock by thread %d\n", schedulerInstance().runningThreadID());
+        // LOGD("unlock by thread %d\n", schedulerInstance().runningThreadID());
         if(waiting_list_.empty())
         {
             if(schedulerInstance().runningThreadID() == owner_)
@@ -310,7 +318,7 @@ public:
         }else
         {
             owner_ = waiting_list_.front();
-            LOGD("wake thread %d as owner\n", owner_);
+            // LOGD("wake thread %d as owner\n", owner_);
             waiting_list_.pop_front();
             schedulerInstance().resume(owner_);
         }
@@ -351,13 +359,80 @@ private:
     ecs::map<mutex_id_t, MutexInternal> mtx_map_; 
 };
 
+class ConditionVariableInternal
+{
+public:
+    ConditionVariableInternal(){}
+    void wait(mutex_id_t mtx_id)
+    {
+        // assert lock is acquired
+        schedulerInstance().setPreemption(false);
+        mutexFactoryInstance().unlock(mtx_id);
+        waiting_list_.push_back(schedulerInstance().runningThreadID());
+        schedulerInstance().suspend();
+        schedulerInstance().setPreemption(true);
+        mutexFactoryInstance().lock(mtx_id);
+    }
+
+    void notifyOne()
+    {
+        if(waiting_list_.empty()) return;
+        schedulerInstance().setPreemption(false);
+        thread_id_t tid = waiting_list_.front();
+        LOGD("thread %d wake by condition variable\n", tid);
+        waiting_list_.pop_front();
+        schedulerInstance().resume(tid);
+        schedulerInstance().setPreemption(true);
+    }
+
+    void notifyAll()
+    {
+        while(!waiting_list_.empty()) notifyOne();
+    }
+private:
+    ecs::list<thread_id_t> waiting_list_;
+};
+
+class ConditionVariableFactory
+{
+public:
+    cond_id_t create() 
+    {  
+        seq_id_++;
+        id_map_[seq_id_] = ConditionVariableInternal();
+        return seq_id_;
+    }
+    void destroy(cond_id_t cond_id)
+    {
+        id_map_.erase(cond_id);
+    }
+    void wait(cond_id_t id, mutex_id_t mtx_id) 
+    {
+        LOGD("wait: thread %d, mtx: %d, cond: %d \n", schedulerInstance().runningThreadID(), mtx_id, id);
+        id_map_[id].wait(mtx_id); 
+    }
+    void notifyOne(cond_id_t id) { id_map_[id].notifyOne(); }
+    void notifyAll(cond_id_t id) { id_map_[id].notifyAll(); }
+private:
+    cond_id_t seq_id_ = 0;
+    ecs::map<cond_id_t, ConditionVariableInternal> id_map_; 
+};
+
 extern void* g_mutex_factory;
+extern void* g_condition_variable_factory;
 
 inline MutexFactory& mutexFactoryInstance()
 {
     if(g_mutex_factory == nullptr)
         g_mutex_factory = (void*) new MutexFactory();
     return *(MutexFactory*)g_mutex_factory;
+}
+
+inline ConditionVariableFactory& condFactoryInstance()
+{
+    if(g_condition_variable_factory == nullptr)
+        g_condition_variable_factory = (void*) new ConditionVariableFactory();
+    return *(ConditionVariableFactory*)g_condition_variable_factory;
 }
 
 inline void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb)
@@ -433,6 +508,7 @@ inline void ThreadScheduler::join( thread_id_t tid )
 #ifdef CS251_OS_STATIC_OBJECTS_ON
 void* g_scheduler_ = nullptr;
 void* g_mutex_factory = nullptr;
+void* g_condition_variable_factory = nullptr;
 #endif
 
 } // namespace cs251

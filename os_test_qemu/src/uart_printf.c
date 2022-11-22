@@ -27,6 +27,15 @@ extern "C" {
 
 
 uint32_t context_shot[context_size];
+const char* mcause_table[8] = {
+    "Instruction address misaligned", 
+    "Instruction access fault", 
+    "Illegal instruction",
+    "",
+    "",
+    "Load access fault",
+    "",
+    "Store/AMO access fault"};
 void printContextSnapshot()
 {
     uint32_t * addr = context_shot;
@@ -48,7 +57,7 @@ void printContextSnapshot()
     printf("a5: 0x%X\n", addr[offset_a5]);
     
     printf("mepc: 0x%X\n", addr[offset_mepc]);
-    printf("mcause: 0x%X\n", addr[offset_mcause]);
+    printf("mcause: 0x%X. %s.\n", addr[offset_mcause], addr[offset_mcause] < 8 ? mcause_table[addr[offset_mcause]] : "no description");
     printf("mstatus: 0x%X\n", addr[offset_mstatus]);
 }
 

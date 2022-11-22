@@ -100,7 +100,6 @@ void c_interrupt_handler(void){
     global++;
     controller_status = CONTROLLER;
 #if 1
-    // if(curr_timer < NewCompare && NewCompare < curr_timer + timecmp_step)
     cs251::schedulerInstance().inInterruptYield();
 #else
 
