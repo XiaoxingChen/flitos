@@ -4,9 +4,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "ecs_list.h"
+#include "ecs_queue.h"
 #include "ecs_map.h"
 #include "port_riscv.h"
 #include "ecs_assert.h"
+#include "ecs_allocator_nosys.h"
 
 #if defined(VIRT_CLINT)
 #include "uart_printf.h"
@@ -181,9 +183,10 @@ public:
         }
         
         LOGD("voluntary context switch from %d to %d. ready_list_: ", prev_thread_id, running_thread_id_);
-        for(auto it = ready_list_.begin(); it != ready_list_.end(); it++)
+        // for(auto it = ready_list_.begin(); it != ready_list_.end(); it++)
+        for(size_t i = 0; i < ready_list_.size(); i++)
         {
-            LOGD("%d ", *it);
+            LOGD("%d ", ready_list_.at(i));
         }LOGD("\n");
 
         disable_interrupts();
@@ -194,7 +197,7 @@ public:
 
     void inInterruptYield()
     {
-        if(!preemption_on_) return;
+        if(preemption_on_ <= 0) return;
         if(ready_list_.empty()) return; // running thread is idel spin thread
 
         thread_id_t prev_thread_id = running_thread_id_;
@@ -205,11 +208,14 @@ public:
         id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
 
         ready_list_.push_back(prev_thread_id);
+        #if 1
         LOGD("preemptive context switch from %d to %d. ready_list_: ", prev_thread_id, running_thread_id_);
-        for(auto it = ready_list_.begin(); it != ready_list_.end(); it++)
+        // for(auto it = ready_list_.begin(); it != ready_list_.end(); it++)
+        for(size_t i = 0; i < ready_list_.size(); i++)
         {
-            LOGD("%d ", *it);
+            LOGD("%d ", ready_list_.at(i));
         }LOGD("\n");
+        #endif
         thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
 
         // come back from other thread
@@ -237,10 +243,12 @@ public:
 
     void join( thread_id_t tid );
 
-    void setPreemption(bool val) 
+    void setPreemption(bool on) 
     {
         // LOGD("thread %d set preemtion to %d\n",runningThreadID(), val); 
-        preemption_on_ = val; 
+        // if(on) preemption_on_ ++;
+        // else preemption_on_--;
+        preemption_on_ = on;
     }
 
 
@@ -251,13 +259,14 @@ public:
 
     thread_id_t runningThreadID() const { return running_thread_id_; }
 
-    const ecs::list<thread_id_t>& readyList() const { return ready_list_; }
+    const ecs::deque<thread_id_t, ecs::allocator_nosys<thread_id_t>>& 
+    readyList() const { return ready_list_; }
     const ecs::map<thread_id_t, ThreadControlBlock>& idTcbMap() const { return id_tcb_map_; }
 private:
-    bool preemption_on_ = false;
+    int preemption_on_ = 0;
     thread_id_t running_thread_id_ = 0;
     size_t thread_counter_ = 0;
-    ecs::list<thread_id_t> ready_list_;
+    ecs::deque<thread_id_t, ecs::allocator_nosys<thread_id_t>> ready_list_;
     // ecs::list<thread_id_t> waiting_list_;
     ecs::list<thread_id_t> finished_list_;
     ecs::map<thread_id_t, ThreadControlBlock> id_tcb_map_;

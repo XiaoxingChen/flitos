@@ -5,6 +5,7 @@
 #include "ecs_vector.h"
 #include "ecs_string.h"
 #include "uart_printf.h"
+#include "ecs_allocator.h"
 
 
 namespace cs251
@@ -15,12 +16,25 @@ template<typename T>
 class ThreadSafeQueue
 {
 public:
+    ThreadSafeQueue()
+    {
+        mtx_que_ = cs251::mutexFactoryInstance().create();
+        cond_que_ = cs251::condFactoryInstance().create();
+        idx_begin_ = 0;
+        idx_end_ = 0;
+        storage_.resize(10);
+    }
     void enqueue(T&& val)
     {
         cs251::mutexFactoryInstance().lock(mtx_que_);
         if(size() == capacity())
         {
-            storage_.resize(storage_.size() + 1);
+            cs251::mutexFactoryInstance().unlock(mtx_que_);
+            return;
+
+            normalize_idx();
+            storage_.resize(storage_.size() + 2);
+            
         }
         storage_.at(idx_end_) = ecs::move(val);
         idx_end_ += 1;
@@ -65,9 +79,9 @@ private:
         T tmp;
         while(p1 < p2)
         {
-            tmp = ecs::move(p1);
-            p1 = ecs::move(p2);
-            p2 = ecs::move(tmp);
+            tmp = ecs::move(storage_.at(p1));
+            storage_.at(p1) = ecs::move(storage_.at(p2));
+            storage_.at(p2) = ecs::move(tmp);
             p1++;
             p2--;
         }
@@ -78,6 +92,9 @@ private:
         invert_data(0, idx_begin_ - 1);
         invert_data(idx_begin_, storage_.size() - 1);
         invert_data(0, storage_.size() - 1);
+
+        idx_begin_ = 0;
+        idx_end_ = storage_.size() - 1;
     }
 
     bool idx_normalized() const
@@ -89,7 +106,7 @@ private:
     cs251::cond_id_t cond_que_;
     size_t idx_begin_;
     size_t idx_end_;
-    ecs::vector<T> storage_;
+    ecs::vector<T, ecs::allocator<T>> storage_;
 };
 
 
@@ -100,21 +117,20 @@ void threadConsoleRunner(void* param);
 
 extern void* p_console_queue;
 
-inline ThreadSafeQueue<ecs::string>& consoleQueueInstance()
+using TypeConsoleContent = char;
+
+inline ThreadSafeQueue<TypeConsoleContent>& consoleQueueInstance()
 {
     if(p_console_queue == nullptr)
     {
-        p_console_queue = new ThreadSafeQueue<ecs::string>();
+        p_console_queue = new ThreadSafeQueue<TypeConsoleContent>();
     }
-    return *static_cast<ThreadSafeQueue<ecs::string>*>(p_console_queue);
+    return *static_cast<ThreadSafeQueue<TypeConsoleContent>*>(p_console_queue);
 }
 
 inline void initConsoleThread()
 {
-    // if(consoleQueueInstance().size())
-    //     raw_printf("ddd test\n");
-    cs251::schedulerInstance().create(threadConsoleRunner, nullptr);
-    // cs251::schedulerInstance().create(threadConsoleRunner, &consoleQueueInstance());
+    cs251::schedulerInstance().create(threadConsoleRunner, &consoleQueueInstance());
 }
 
 #ifdef THREAD_SAFE_PRINT_IMPLEMENTATION
@@ -123,14 +139,13 @@ void* p_console_queue = nullptr;
 
 void threadConsoleRunner(void* param)
 {
-    // ThreadSafeQueue<ecs::string>* p_que = static_cast<ThreadSafeQueue<ecs::string>*>(param);
+    ThreadSafeQueue<TypeConsoleContent>* p_que = static_cast<ThreadSafeQueue<TypeConsoleContent>*>(param);
     char * UART_MEMORY = (char*)(0x10000000);
     
     while(1)
     {
-        // ecs::string msg;
-        ecs::vector<int> msg(2);
-        //msg = p_que->dequeue();
+        TypeConsoleContent msg = p_que->dequeue();
+        UART_MEMORY[0] = msg;
         // for(int i = 0; i < msg.size(); i++)
         // {
         //     UART_MEMORY[0] = msg.at(i);

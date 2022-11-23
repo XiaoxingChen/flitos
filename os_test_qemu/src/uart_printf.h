@@ -3,7 +3,7 @@
 
 int printf(const char *format, ...);
 int raw_printf(const char *format, ...);
-#define LOGD(...) printf(__VA_ARGS__)
+#define LOGD(...) raw_printf(__VA_ARGS__)
 // #define LOGD(...) while(0)
 
 #if defined(__cplusplus)

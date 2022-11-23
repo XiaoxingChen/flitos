@@ -32,8 +32,9 @@ int printf(const char *format, ...)
     va_start(args, format);
 	n = npf_vsnprintf(vsnprintf_buff, buff_len, format, args);
 	va_end(args);
-    ecs::string tmp_str(vsnprintf_buff);
+    
 #if 0
+    ecs::string tmp_str(vsnprintf_buff);
     cs251::consoleQueueInstance().enqueue(ecs::move(tmp_str));
 #else
     char * UART_MEMORY = (char*)(0x10000000);

@@ -1,8 +1,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "uart_printf.h"
+
 #define CS251_OS_STATIC_OBJECTS_ON
-#include "cs251_os.h"
+#define ALLOCATOR_IMPLEMENTATION
+#include "ecs_allocator.h"
+#undef ALLOCATOR_IMPLEMENTATION
+
+
+
 #include <stddef.h>
 #include "thread_api.h"
 
@@ -91,16 +97,24 @@ void displayThread(void* args)
         {
             printf("cnt: %d\n", val);
             last_val = val;
+            // cs251::consoleQueueInstance().enqueue(ecs::string("t"));
+            // cs251::consoleQueueInstance().enqueue('a');
         }
         // cs251::thread_yield();
     }
-    // if(val == 2000)
-    // {
-    //     while(1) cs251::thread_yield();
-    // }else
-    // {
-    //     while(1) cs251::thread_yield();
-    // }
+}
+
+void threadEnqueueTest(void*)
+{
+    int last_global = global;
+    while(1)
+    {
+        if(global - last_global > 10)
+        {
+            last_global = global;
+            cs251::consoleQueueInstance().enqueue('a');
+        }
+    }
 }
 
 extern "C" void startFirstTask( uint32_t stk_ptr );
@@ -138,7 +152,7 @@ int main() {
     // }
     // initForIdleThread();
     VIDEO_MEMORY[0x40 * 4] = '0';
-    printf("\n\n\n\n\n\n\n\n=== CS251 OS START! === \n\n\n\n\n\n\n\n");
+    raw_printf("\n\n\n\n\n\n\n\n=== CS251 OS START! === \n\n\n\n\n\n\n\n");
 
     uint32_t display_offsets[] = {0x40+0,0x40+1,0x40+2,0x40+3};
 
@@ -151,17 +165,20 @@ int main() {
     mtx_cnt.cond_counter = cs251::condFactoryInstance().create();
 
     // scheduler.clearFinishedList();
+    disable_interrupts();
     
     cs251::initConsoleThread();
     cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
-    cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     
-    // cs251::schedulerInstance().create(naiveThread, &display_offsets[3]);
-    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    cs251::schedulerInstance().create(displayThread, &mtx_cnt);
-    // increaseTimeCompare(1000);
-    disable_interrupts();
+    
+    // cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
+    
+    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    // cs251::schedulerInstance().create(displayThread, &mtx_cnt);
+    cs251::schedulerInstance().create(threadEnqueueTest, nullptr);
+    
+    
     cs251::schedulerInstance().launchFirstTask();
     while (1) ;
     

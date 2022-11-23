@@ -2,72 +2,73 @@
 #define _ECS_STRING_H_
 
 #include "ecs_vector.h"
-
 namespace ecs
 {
-    
-class string: public vector<char>
+template<class Allocator=allocator<char>>
+class basic_string: public vector<char, Allocator>
 {
 public:
-    using BaseType = vector<char>;
+    using BaseType = vector<char, Allocator>;
     char* c_str() { return BaseType::data(); }
     size_t size() const { return BaseType::size() - 1; }
 
-    string (): BaseType(1) { at(0) = '\x00'; };
+    basic_string (): BaseType(1) { BaseType::at(0) = '\x00'; };
 
 
-    string (const string& rhs): vector(rhs)
+    basic_string (const basic_string& rhs): BaseType(rhs)
     {
     }
 
-    string (string&& rhs): vector(ecs::move(rhs))
+    basic_string (basic_string&& rhs): BaseType(ecs::move(rhs))
     {
         rhs.push_back('\x00');
     }
 
-    string (const char* c_str)
+    basic_string (const char* c_str)
     {
         size_t idx = 0;
         while(1)
         {
-            push_back(c_str[idx]);
+            BaseType::push_back(c_str[idx]);
             if(c_str[idx] == 0) break;
             idx++;
         }
     }
-    void operator += (const string& rhs)
+    void operator += (const basic_string& rhs)
     {
-        size_t old_size = size();
-        resize(old_size + rhs.size() + 1);
+        size_t old_size = BaseType::size();
+        BaseType::resize(old_size + rhs.size() + 1);
         for(size_t i = 0; i < rhs.size(); i++)
         {
-            at(i + old_size) = rhs.at(i);
+            BaseType::at(i + old_size) = rhs.at(i);
         }
-        at(size()) = '\x00';
+        BaseType::at(size()) = '\x00';
     }
 
-    string operator + (const string& rhs) const
+    basic_string operator + (const basic_string& rhs) const
     {
-        string ret;
+        basic_string ret;
         ret += *this;
         ret += rhs;
         return ret;
     }
 
-    void operator = (string&& rhs)
+    void operator = (basic_string&& rhs)
     {
-        swap(rhs);
+        BaseType::swap(rhs);
     }
 
-    void operator = (const string& rhs)
+    void operator = (const basic_string& rhs)
     {
         for(size_t i = 0; i < static_cast<BaseType>(rhs).size(); i++)
         {
-            at(i) = rhs.at(i);
+            BaseType::at(i) = rhs.at(i);
         }
     }
 private:
 };
+
+using string = basic_string<>;
 } // namespace ecs
 
 

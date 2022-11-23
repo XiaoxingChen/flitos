@@ -22,9 +22,9 @@ inline size_t findMemSize(size_t val)
     while(ret < val) ret <<= 1;
     return ret;
 }
-
-template<typename T>
-class vector
+template <typename T> class allocator;
+template<typename T, class Allocator=allocator<T>>
+class vector: public Allocator
 {
 private:
     size_t size_ = 0;
@@ -33,12 +33,13 @@ private:
     void reallocateMemory(size_t desire)
     {
         T* old_mem = mem_;
+        size_t old_cap = cap_;
         cap_ = std::max<size_t>(2, findMemSize(desire));
-        mem_ = static_cast<T*>(malloc(cap_ * sizeof(T)));
+        mem_ = static_cast<T*>(Allocator::allocate(cap_));
         if(old_mem != nullptr)
         {
             memcpy(mem_, old_mem, size_ * sizeof(T));
-            free(old_mem);
+            Allocator::deallocate(old_mem, old_cap);
         }
     }
 public:
@@ -51,7 +52,7 @@ public:
         {
             mem_[i].~T();
         }
-        free(mem_);
+        Allocator::deallocate(mem_, cap_);
     }
 
     void swap(vector& rhs)
