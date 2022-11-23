@@ -65,6 +65,7 @@ public:
         stack_ptr_ -= static_cast<size_t>(context_size);
         *(stack_ptr_ + static_cast<size_t>(offset_ra)) = reinterpret_cast<size_t>(stub_wrapper);
         *(stack_ptr_ + static_cast<size_t>(offset_gp)) = reinterpret_cast<size_t>(__global_pointer$);
+        *(stack_ptr_ + static_cast<size_t>(offset_mstatus)) = 0x1880; //make sure interrupt is closed when context switch finished.
     }
 #if 0
     void init(void (*f)(void*), void* arg)
@@ -145,6 +146,7 @@ public:
         id_tcb_map_[chosen_id].setState(ThreadState::eRUNNING);
         running_thread_id_ = chosen_id;
         setPreemption(true);
+        LOGD("launch first task: %d\n", chosen_id);
         startFirstTask((uint32_t) (id_tcb_map_[chosen_id].sp()));
     }
 

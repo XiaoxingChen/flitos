@@ -4,6 +4,7 @@
 #include "cs251_os.h"
 #include "ecs_vector.h"
 #include "ecs_string.h"
+#include "uart_printf.h"
 
 
 namespace cs251
@@ -33,6 +34,7 @@ public:
         cs251::mutexFactoryInstance().lock(mtx_que_);
         while(empty())
         {
+            raw_printf("dequeue\n");
             cs251::condFactoryInstance().wait(cond_que_, mtx_que_);
         }
         T ret = storage_.at(idx_begin_);
@@ -109,7 +111,10 @@ inline ThreadSafeQueue<ecs::string>& consoleQueueInstance()
 
 inline void initConsoleThread()
 {
-    cs251::schedulerInstance().create(threadConsoleRunner, &consoleQueueInstance());
+    // if(consoleQueueInstance().size())
+    //     raw_printf("ddd test\n");
+    cs251::schedulerInstance().create(threadConsoleRunner, nullptr);
+    // cs251::schedulerInstance().create(threadConsoleRunner, &consoleQueueInstance());
 }
 
 #ifdef THREAD_SAFE_PRINT_IMPLEMENTATION
@@ -118,16 +123,18 @@ void* p_console_queue = nullptr;
 
 void threadConsoleRunner(void* param)
 {
-    ThreadSafeQueue<ecs::string>* p_que = static_cast<ThreadSafeQueue<ecs::string>*>(param);
+    // ThreadSafeQueue<ecs::string>* p_que = static_cast<ThreadSafeQueue<ecs::string>*>(param);
     char * UART_MEMORY = (char*)(0x10000000);
     
     while(1)
     {
-        ecs::string msg = p_que->dequeue();
-        for(int i = 0; i < msg.size(); i++)
-        {
-            UART_MEMORY[0] = msg.at(i);
-        }
+        // ecs::string msg;
+        ecs::vector<int> msg(2);
+        //msg = p_que->dequeue();
+        // for(int i = 0; i < msg.size(); i++)
+        // {
+        //     UART_MEMORY[0] = msg.at(i);
+        // }
     }
 }
 

@@ -45,6 +45,15 @@ public:
     vector(){};
     vector(size_t n) { resize(n); };
 
+    ~vector()
+    {
+        for(size_t i = 0; i < size(); i++)
+        {
+            mem_[i].~T();
+        }
+        free(mem_);
+    }
+
     void swap(vector& rhs)
     {
         size_t tmp;

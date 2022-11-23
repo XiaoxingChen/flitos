@@ -151,8 +151,8 @@ int main() {
     mtx_cnt.cond_counter = cs251::condFactoryInstance().create();
 
     // scheduler.clearFinishedList();
-    disable_interrupts();
-    // cs251::initConsoleThread();
+    
+    cs251::initConsoleThread();
     cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
     cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     
@@ -161,7 +161,7 @@ int main() {
     cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
     cs251::schedulerInstance().create(displayThread, &mtx_cnt);
     // increaseTimeCompare(1000);
-    
+    disable_interrupts();
     cs251::schedulerInstance().launchFirstTask();
     while (1) ;
     

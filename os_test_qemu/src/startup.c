@@ -54,8 +54,9 @@ void init(void){
     }
     // callConstructors();
 
+    csr_mstatus_write(0x0);
     csr_write_mie(0x888);       // Enable all interrupt soruces
-    // csr_enable_interrupts();    // Global interrupt enable
+    csr_enable_interrupts();    // Global interrupt enable
     MTIMECMP_LOW = 1;
     MTIMECMP_HIGH = 0;
 }
@@ -86,7 +87,8 @@ void illegalTrap()
 int context_switch_cnt = 0;
 
 void c_interrupt_handler(void){
-    *nestCriticalCount() += 1;
+    increaseNestCriticalCount();
+    
     illegalTrap();
     // uint32_t timecmp_step = 5000;
     // uint64_t curr_timer = readMachineTime();
@@ -111,7 +113,7 @@ void c_interrupt_handler(void){
         cs251::schedulerInstance().inInterruptYield();
     }
 #endif
-    *nestCriticalCount() -= 1;
+    decreaseNestCriticalCount();
 }
 #ifdef __cplusplus
 }
@@ -121,11 +123,12 @@ void c_interrupt_handler(void){
 extern "C"{
 #endif
 uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t call){
-    *nestCriticalCount() += 1;
+    increaseNestCriticalCount();
+    uint32_t ret = 0xffffffff;
 
-if(call == 13)
+    if(call == 13)
     {
-        return (uint32_t)cs251::mutexFactoryInstance().create();
+        ret = (uint32_t)cs251::mutexFactoryInstance().create();
     }else if(call == 14)
     {
         cs251::mutexFactoryInstance().destroy(a0);
@@ -143,8 +146,8 @@ if(call == 13)
         cs251::schedulerInstance().join(a0);
     }
 
-    *nestCriticalCount() -= 1;
-    return -1;
+    decreaseNestCriticalCount();
+    return ret;
 }
 #ifdef __cplusplus
 }
