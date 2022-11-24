@@ -23,10 +23,12 @@ public:
         idx_begin_ = 0;
         idx_end_ = 0;
         storage_.resize(10);
+        cnt_ = 0;
     }
     void enqueue(T&& val)
     {
         cs251::mutexFactoryInstance().lock(mtx_que_);
+#if 0
         if(size() == capacity())
         {
             cs251::mutexFactoryInstance().unlock(mtx_que_);
@@ -38,23 +40,31 @@ public:
         }
         storage_.at(idx_end_) = ecs::move(val);
         idx_end_ += 1;
+#else
+        cnt_ ++;
+#endif
 
         cs251::mutexFactoryInstance().unlock(mtx_que_);
         cs251::condFactoryInstance().notifyOne(cond_que_);
     }
 
-    T dequeue()
+    int dequeue()
     {
         cs251::mutexFactoryInstance().lock(mtx_que_);
-        while(empty())
+        // while(empty())
+        while(cnt_ == 0)
         {
             raw_printf("dequeue\n");
             cs251::condFactoryInstance().wait(cond_que_, mtx_que_);
         }
+#if 0
         T ret = storage_.at(idx_begin_);
         idx_begin_ = (idx_begin_ + 1) % storage_.size();
+#else
+        cnt_ -= 1;
+#endif
         cs251::mutexFactoryInstance().unlock(mtx_que_);
-        return ret;
+        return cnt_;
     }
 
     size_t capacity() const
@@ -102,6 +112,7 @@ private:
         return idx_begin_ == 0;
     }
 private:
+    size_t cnt_;
     cs251::mutex_id_t mtx_que_;
     cs251::cond_id_t cond_que_;
     size_t idx_begin_;
@@ -144,8 +155,8 @@ void threadConsoleRunner(void* param)
     
     while(1)
     {
-        TypeConsoleContent msg = p_que->dequeue();
-        UART_MEMORY[0] = msg;
+        int msg = p_que->dequeue();
+        UART_MEMORY[0] = '5' + msg;
         // for(int i = 0; i < msg.size(); i++)
         // {
         //     UART_MEMORY[0] = msg.at(i);
