@@ -21,14 +21,24 @@ public:
         mtx_que_ = cs251::mutexFactoryInstance().create();
         cond_que_ = cs251::condFactoryInstance().create();
     }
-    void enqueue(T&& val)
+    void enqueue(const T& val)
     {
         cs251::mutexFactoryInstance().lock(mtx_que_);
-#if 1
         q_.push_back(val);
-#else
-        cnt_ ++;
-#endif
+
+        cs251::mutexFactoryInstance().unlock(mtx_que_);
+        cs251::condFactoryInstance().notifyOne(cond_que_);
+    }
+
+    template<typename Iterator>
+    void enqueue(Iterator begin, Iterator end)
+    {
+        cs251::mutexFactoryInstance().lock(mtx_que_);
+
+        for(auto it = begin; it != end; it++)
+        {
+            q_.push_back(*it);
+        }
 
         cs251::mutexFactoryInstance().unlock(mtx_que_);
         cs251::condFactoryInstance().notifyOne(cond_que_);
@@ -39,17 +49,30 @@ public:
         cs251::mutexFactoryInstance().lock(mtx_que_);
         while(empty())
         {
-            raw_printf("dequeue\n");
             cs251::condFactoryInstance().wait(cond_que_, mtx_que_);
         }
-#if 1
+
         T ret = q_.front();
         q_.pop_front();
-#else
-        cnt_ -= 1;
-#endif
+
         cs251::mutexFactoryInstance().unlock(mtx_que_);
         return ret;
+    }
+
+    template<typename Func>
+    void dequeue(Func collect_func)
+    {
+        cs251::mutexFactoryInstance().lock(mtx_que_);
+        while(empty())
+        {
+            // raw_printf("dequeue\n");
+            cs251::condFactoryInstance().wait(cond_que_, mtx_que_);
+        }
+        
+        collect_func(q_.front());
+        q_.pop_front();
+
+        cs251::mutexFactoryInstance().unlock(mtx_que_);
     }
 
     size_t size() const
@@ -77,7 +100,7 @@ void threadConsoleRunner(void* param);
 extern void* p_console_queue;
 
 // using TypeConsoleContent = ecs::string;
-using TypeConsoleContent = ecs::vector<char>;
+using TypeConsoleContent = char;
 
 inline ThreadSafeQueue<TypeConsoleContent>& consoleQueueInstance()
 {
@@ -105,13 +128,7 @@ void threadConsoleRunner(void* param)
     
     while(1)
     {
-        TypeConsoleContent msg;
-        msg = p_que->dequeue();
-        // UART_MEMORY[0] = msg;
-        for(int i = 0; i < msg.size(); i++)
-        {
-            UART_MEMORY[0] = msg.at(i);
-        }
+        p_que->dequeue([UART_MEMORY](const char& c){UART_MEMORY[0] = c;});
     }
 }
 

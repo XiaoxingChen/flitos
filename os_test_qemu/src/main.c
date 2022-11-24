@@ -107,14 +107,14 @@ void displayThread(void* args)
 void threadEnqueueTest(void*)
 {
     int last_global = global;
+    ecs::string msg("hello baby\n");
     while(1)
     {
         if(global - last_global > 10)
         {
             last_global = global;
-            ecs::vector<char> msg(1);
-            msg.at(0) = '3';
-            cs251::consoleQueueInstance().enqueue(ecs::move(msg));
+            
+            cs251::consoleQueueInstance().enqueue(msg.c_str(), msg.c_str() + msg.size());
         }
     }
 }
