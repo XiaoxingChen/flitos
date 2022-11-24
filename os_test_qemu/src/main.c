@@ -173,9 +173,9 @@ int main() {
     
     // cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     
-    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    // cs251::schedulerInstance().create(displayThread, &mtx_cnt);
+    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    cs251::schedulerInstance().create(displayThread, &mtx_cnt);
     cs251::schedulerInstance().create(threadEnqueueTest, nullptr);
     
     

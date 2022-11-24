@@ -102,6 +102,17 @@ public:
     // }
 
     mutex_id_t mutexForJoin() const { return mtx_for_join_; }
+    void setPreemption(bool on)
+    {
+        if(on) preemption_on_ ++;
+        else preemption_on_--;
+        if(preemption_on_ > 1)
+            assert(false);
+    }
+    bool allowPreemption() const
+    {
+        return preemption_on_ > 0;
+    }
 
 private:
     
@@ -110,6 +121,7 @@ private:
     uint8_t* stk_mem_ = nullptr;
     size_t* stack_ptr_ = nullptr;
     void* program_counter_ = nullptr;
+    int preemption_on_ = 1;
     ThreadState state_ = eINIT;
     mutex_id_t mtx_for_join_ = -1;
 };
@@ -147,7 +159,6 @@ public:
 
         id_tcb_map_[chosen_id].setState(ThreadState::eRUNNING);
         running_thread_id_ = chosen_id;
-        setPreemption(true);
         LOGD("launch first task: %d\n", chosen_id);
         startFirstTask((uint32_t) (id_tcb_map_[chosen_id].sp()));
     }
@@ -158,7 +169,6 @@ public:
         // involuntary context switch 
         // could generate race condition.
         // Therefore disable preemption here.
-        int store_preemption = preemption_on_;
         setPreemption(false);
         do
         {
@@ -168,68 +178,73 @@ public:
             
             if(ready_list_.empty()) break; // running thread is idel spin thread
 
-            thread_id_t prev_thread_id = running_thread_id_;
-            running_thread_id_ = ready_list_.front();
+            thread_id_t curr_thread_id = running_thread_id_;
+            thread_id_t next_thread_id = ready_list_.front();
             ready_list_.pop_front();
-            assert(prev_thread_id != running_thread_id_);
+            assert(curr_thread_id != next_thread_id);
             // LOGD("%s:%d\n", __FILE__, __LINE__);
 
-            id_tcb_map_[prev_thread_id].setState(state);
-            id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
+            id_tcb_map_[curr_thread_id].setState(state);
+            id_tcb_map_[next_thread_id].setState(ThreadState::eRUNNING);
 
             if(state == ThreadState::eREADY)
             {
-                ready_list_.push_back(prev_thread_id);
+                ready_list_.push_back(curr_thread_id);
             }else if (state == ThreadState::eFINISHED)
             {
-                finished_list_.push_back(prev_thread_id);
+                finished_list_.push_back(curr_thread_id);
             }
             
-            LOGD("voluntary context switch from %d to %d. ready_list_: ", prev_thread_id, running_thread_id_);
-            // for(auto it = ready_list_.begin(); it != ready_list_.end(); it++)
-            for(size_t i = 0; i < ready_list_.size(); i++)
-            {
-                LOGD("%d ", ready_list_.at(i));
-            }LOGD("\n");
+            debugContextSwitchInfo(curr_thread_id, next_thread_id, false);
 
             disable_interrupts();
-            thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
+            running_thread_id_ = next_thread_id;
+            thread_switch(id_tcb_map_[curr_thread_id], id_tcb_map_[next_thread_id]);
             enable_interrupts();
         } while (0);
         // same logic as [preemption context]
-        preemption_on_ = store_preemption;
+        setPreemption(true);
     }
 
-    void inInterruptYield()
+    void debugContextSwitchInfo(thread_id_t curr_thread_id, thread_id_t next_thread_id, bool preemption)
     {
-        if(preemption_on_ <= 0)
-            return;
-        if(ready_list_.empty()) return; // running thread is idel spin thread
-
-        thread_id_t prev_thread_id = running_thread_id_;
-        running_thread_id_ = ready_list_.front();
-        ready_list_.pop_front();
-
-        id_tcb_map_[prev_thread_id].setState(ThreadState::eREADY);
-        id_tcb_map_[running_thread_id_].setState(ThreadState::eRUNNING);
-
-        ready_list_.push_back(prev_thread_id);
-        #if 1
-        LOGD("preemptive context switch from %d to %d. ready_list_: ", prev_thread_id, running_thread_id_);
-        // for(auto it = ready_list_.begin(); it != ready_list_.end(); it++)
+        assert(curr_thread_id != next_thread_id);
+        
+        if(preemption)
+        {
+            LOGD("Preemptive ");
+        }else
+        {
+            LOGD("Voluntary ");
+            if(allowPreemption())
+                assert(false);
+        }
+        LOGD("context switch from %d to %d. ready_list_: ", curr_thread_id, next_thread_id);
         for(size_t i = 0; i < ready_list_.size(); i++)
         {
             LOGD("%d ", ready_list_.at(i));
         }LOGD("\n");
-        #endif
-        int store_preemption = preemption_on_;
-        thread_switch(id_tcb_map_[prev_thread_id], id_tcb_map_[running_thread_id_]);
+    }
 
-        // come back from thread T [preemption context]
-        // 1. T do voluntary context switch, where preemption <= 0
-        // 2. T do involuntary context switch, preemption > 0
-        // 3. T is main function, startFirstTask()
-        preemption_on_ = store_preemption;
+    void inInterruptYield()
+    {
+        if(! allowPreemption())
+            return;
+        if(ready_list_.empty()) return; // running thread is idel spin thread
+
+        thread_id_t curr_thread_id = running_thread_id_;
+        thread_id_t next_thread_id = ready_list_.front();
+        ready_list_.pop_front();
+        
+        debugContextSwitchInfo(curr_thread_id, next_thread_id, true);
+
+        id_tcb_map_[curr_thread_id].setState(ThreadState::eREADY);
+        id_tcb_map_[next_thread_id].setState(ThreadState::eRUNNING);
+
+        ready_list_.push_back(curr_thread_id);
+        
+        running_thread_id_ = next_thread_id;
+        thread_switch(id_tcb_map_[curr_thread_id], id_tcb_map_[next_thread_id]);
     }
 
     void yield()
@@ -255,13 +270,23 @@ public:
 
     void setPreemption(bool on) 
     {
-        disable_interrupts();
-        if(on) preemption_on_ ++;
-        else preemption_on_--;
-        // LOGD("thread %d set preemtion to %d\n",runningThreadID(), preemption_on_); 
-        if(preemption_on_ > 1)
-            assert(false);
-        enable_interrupts();
+        #if 0
+            disable_interrupts();
+            if(on) preemption_on_ ++;
+            else preemption_on_--;
+            // LOGD("thread %d set preemtion to %d\n",runningThreadID(), preemption_on_); 
+            if(preemption_on_ > 1)
+                assert(false);
+            enable_interrupts();
+        #else
+            id_tcb_map_[running_thread_id_].setPreemption(on);
+        #endif
+    }
+
+    bool allowPreemption() const 
+    { 
+        if(id_tcb_map_.size() == 0) return false;
+        return id_tcb_map_.at(running_thread_id_).allowPreemption(); 
     }
 
 
@@ -276,7 +301,7 @@ public:
     readyList() const { return ready_list_; }
     const ecs::map<thread_id_t, ThreadControlBlock>& idTcbMap() const { return id_tcb_map_; }
 private:
-    volatile int preemption_on_ = 0;
+    // volatile int preemption_on_ = 0;
     thread_id_t running_thread_id_ = 0;
     size_t thread_counter_ = 0;
     ecs::deque<thread_id_t, ecs::allocator_nosys<thread_id_t>> ready_list_;
@@ -405,12 +430,16 @@ public:
 
     void notifyOne()
     {
-        if(waiting_list_.empty()) return;
         schedulerInstance().setPreemption(false);
-        thread_id_t tid = waiting_list_.front();
-        LOGD("thread %d put to ready list by condition variable\n", tid);
-        waiting_list_.pop_front();
-        schedulerInstance().resume(tid);
+        do
+        {
+            if(waiting_list_.empty()) break;
+            // LOGD("%s:%d\n", __FILE__, __LINE__);
+            thread_id_t tid = waiting_list_.front();
+            LOGD("thread %d put to ready list by condition variable\n", tid);
+            waiting_list_.pop_front();
+            schedulerInstance().resume(tid);
+        } while (0);
         schedulerInstance().setPreemption(true);
     }
 
@@ -522,6 +551,8 @@ inline void ThreadControlBlock::init(void (*f)(void*), void* arg)
     *(stack_ptr_ + static_cast<size_t>(offset_a1)) = reinterpret_cast<size_t>(arg);
     *(stack_ptr_ + static_cast<size_t>(offset_a0)) = reinterpret_cast<size_t>(f);
     state_ = ThreadState::eREADY;
+
+    preemption_on_ = 1;
 
     // mtx_for_join_ = mutexFactoryInstance().create();
     // mutexFactoryInstance().lock(mtx_for_join_);
