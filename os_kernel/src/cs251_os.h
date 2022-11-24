@@ -236,12 +236,11 @@ public:
         thread_id_t next_thread_id = ready_list_.front();
         ready_list_.pop_front();
         
-        debugContextSwitchInfo(curr_thread_id, next_thread_id, true);
-
         id_tcb_map_[curr_thread_id].setState(ThreadState::eREADY);
         id_tcb_map_[next_thread_id].setState(ThreadState::eRUNNING);
 
         ready_list_.push_back(curr_thread_id);
+        debugContextSwitchInfo(curr_thread_id, next_thread_id, true);
         
         running_thread_id_ = next_thread_id;
         thread_switch(id_tcb_map_[curr_thread_id], id_tcb_map_[next_thread_id]);
@@ -382,7 +381,7 @@ private:
 
 private:
     thread_id_t owner_ = -1;
-    ecs::list<thread_id_t> waiting_list_;
+    ecs::deque<thread_id_t, ecs::allocator_nosys<thread_id_t>> waiting_list_;
 };
 
 class MutexFactory
@@ -448,7 +447,7 @@ public:
         while(!waiting_list_.empty()) notifyOne();
     }
 private:
-    ecs::list<thread_id_t> waiting_list_;
+    ecs::deque<thread_id_t, ecs::allocator_nosys<thread_id_t>> waiting_list_;
 };
 
 class ConditionVariableFactory

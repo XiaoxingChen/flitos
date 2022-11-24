@@ -30,7 +30,11 @@ public:
         T* ret = nullptr;
         cs251::mutex_id_t mtx = allocatorMutexInstance();
         cs251::mutexFactoryInstance().lock(mtx);
+        // uint32_t return_address;
+        // asm volatile ("mv %0, ra" : "=r"(return_address));
+        // LOGD("%s:%d; thread: %d; ra: 0x%X,", __FILE__, __LINE__, cs251::schedulerInstance().runningThreadID(), return_address);
         ret = static_cast<T*>(malloc(n * sizeof(T)));
+        // LOGD("addr: 0x%X\n", ret);
         cs251::mutexFactoryInstance().unlock(mtx);
         return ret;
     }
@@ -38,6 +42,9 @@ public:
     {
         cs251::mutex_id_t mtx = allocatorMutexInstance();
         cs251::mutexFactoryInstance().lock(mtx);
+        // uint32_t return_address;
+        // asm volatile ("mv %0, ra" : "=r"(return_address));
+        // LOGD("%s:%d; thread: %d; ra: 0x%X\n", __FILE__, __LINE__, cs251::schedulerInstance().runningThreadID(), return_address);
         free(p);
         cs251::mutexFactoryInstance().unlock(mtx);
     }

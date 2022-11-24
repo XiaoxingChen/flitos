@@ -124,14 +124,14 @@ public:
         if(size_ == 0) return;
         if(size_ == 1)
         {
-            free(begin_);
+            delete(begin_);
             begin_ = nullptr;
             rbegin_ = nullptr;
             size_ --;
             return ;
         }
         Node<T>* new_rbegin = rbegin_->prev;
-        free(new_rbegin->next);
+        delete(new_rbegin->next);
         new_rbegin->next = nullptr;
         rbegin_ = new_rbegin;
         size_ --;
@@ -142,14 +142,14 @@ public:
         if(size_ == 0) return;
         if(size_ == 1)
         {
-            free(begin_);
+            delete(begin_);
             begin_ = nullptr;
             rbegin_ = nullptr;
             size_ --;
             return ;
         }
         Node<T>* new_begin = begin_->next;
-        free(new_begin->prev);
+        delete(new_begin->prev);
         new_begin->prev = nullptr;
         begin_ = new_begin;
         size_ --;

@@ -82,6 +82,12 @@ public:
         swap(rhs);
     }
 
+    void operator = (const vector& rhs)
+    {
+        resize(rhs.size());
+        for(size_t i = 0; i < rhs.size(); i++) at(i) = rhs.at(i);
+    }
+
     vector(const vector& rhs)
     {
         resize(rhs.size());

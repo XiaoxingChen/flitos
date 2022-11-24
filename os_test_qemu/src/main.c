@@ -112,7 +112,9 @@ void threadEnqueueTest(void*)
         if(global - last_global > 10)
         {
             last_global = global;
-            cs251::consoleQueueInstance().enqueue('a');
+            ecs::vector<char> msg(1);
+            msg.at(0) = '3';
+            cs251::consoleQueueInstance().enqueue(ecs::move(msg));
         }
     }
 }
@@ -173,9 +175,9 @@ int main() {
     
     // cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     
-    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    cs251::schedulerInstance().create(displayThread, &mtx_cnt);
+    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    // cs251::schedulerInstance().create(displayThread, &mtx_cnt);
     cs251::schedulerInstance().create(threadEnqueueTest, nullptr);
     
     

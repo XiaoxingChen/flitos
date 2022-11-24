@@ -6,7 +6,7 @@
 #include "ecs_string.h"
 #include "uart_printf.h"
 #include "ecs_allocator.h"
-
+#include "ecs_queue.h"
 
 namespace cs251
 {
@@ -20,26 +20,12 @@ public:
     {
         mtx_que_ = cs251::mutexFactoryInstance().create();
         cond_que_ = cs251::condFactoryInstance().create();
-        idx_begin_ = 0;
-        idx_end_ = 0;
-        storage_.resize(10);
-        cnt_ = 0;
     }
     void enqueue(T&& val)
     {
         cs251::mutexFactoryInstance().lock(mtx_que_);
-#if 0
-        if(size() == capacity())
-        {
-            cs251::mutexFactoryInstance().unlock(mtx_que_);
-            return;
-
-            normalize_idx();
-            storage_.resize(storage_.size() + 2);
-            
-        }
-        storage_.at(idx_end_) = ecs::move(val);
-        idx_end_ += 1;
+#if 1
+        q_.push_back(val);
 #else
         cnt_ ++;
 #endif
@@ -48,76 +34,38 @@ public:
         cs251::condFactoryInstance().notifyOne(cond_que_);
     }
 
-    int dequeue()
+    T dequeue()
     {
         cs251::mutexFactoryInstance().lock(mtx_que_);
-        // while(empty())
-        while(cnt_ == 0)
+        while(empty())
         {
             raw_printf("dequeue\n");
             cs251::condFactoryInstance().wait(cond_que_, mtx_que_);
         }
-#if 0
-        T ret = storage_.at(idx_begin_);
-        idx_begin_ = (idx_begin_ + 1) % storage_.size();
+#if 1
+        T ret = q_.front();
+        q_.pop_front();
 #else
         cnt_ -= 1;
 #endif
         cs251::mutexFactoryInstance().unlock(mtx_que_);
-        return cnt_;
-    }
-
-    size_t capacity() const
-    {
-        if(storage_.empty()) return 0;
-        return storage_.size() - 1;
+        return ret;
     }
 
     size_t size() const
     {
-        if(idx_end_ >= idx_begin_) return idx_end_ - idx_begin_;
-        return idx_end_ + storage_.size() - idx_begin_;
+        return q_.size();
     }
     bool empty() const
     {
-        return 0 == size();
+        return q_.empty();
     }
 
-private:
-    void invert_data(size_t p1, size_t p2)
-    {
-        T tmp;
-        while(p1 < p2)
-        {
-            tmp = ecs::move(storage_.at(p1));
-            storage_.at(p1) = ecs::move(storage_.at(p2));
-            storage_.at(p2) = ecs::move(tmp);
-            p1++;
-            p2--;
-        }
-    }
-    void normalize_idx()
-    {
-        if(idx_normalized()) return;
-        invert_data(0, idx_begin_ - 1);
-        invert_data(idx_begin_, storage_.size() - 1);
-        invert_data(0, storage_.size() - 1);
-
-        idx_begin_ = 0;
-        idx_end_ = storage_.size() - 1;
-    }
-
-    bool idx_normalized() const
-    {
-        return idx_begin_ == 0;
-    }
 private:
     size_t cnt_;
     cs251::mutex_id_t mtx_que_;
     cs251::cond_id_t cond_que_;
-    size_t idx_begin_;
-    size_t idx_end_;
-    ecs::vector<T, ecs::allocator<T>> storage_;
+    ecs::deque<T> q_;
 };
 
 
@@ -128,7 +76,8 @@ void threadConsoleRunner(void* param);
 
 extern void* p_console_queue;
 
-using TypeConsoleContent = char;
+// using TypeConsoleContent = ecs::string;
+using TypeConsoleContent = ecs::vector<char>;
 
 inline ThreadSafeQueue<TypeConsoleContent>& consoleQueueInstance()
 {
@@ -153,14 +102,16 @@ void threadConsoleRunner(void* param)
     ThreadSafeQueue<TypeConsoleContent>* p_que = static_cast<ThreadSafeQueue<TypeConsoleContent>*>(param);
     char * UART_MEMORY = (char*)(0x10000000);
     
+    
     while(1)
     {
-        int msg = p_que->dequeue();
-        UART_MEMORY[0] = '5' + msg;
-        // for(int i = 0; i < msg.size(); i++)
-        // {
-        //     UART_MEMORY[0] = msg.at(i);
-        // }
+        TypeConsoleContent msg;
+        msg = p_que->dequeue();
+        // UART_MEMORY[0] = msg;
+        for(int i = 0; i < msg.size(); i++)
+        {
+            UART_MEMORY[0] = msg.at(i);
+        }
     }
 }
 
