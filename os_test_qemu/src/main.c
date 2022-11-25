@@ -1,11 +1,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "uart_printf.h"
+#include "ecs_string.h"
 
 #define CS251_OS_STATIC_OBJECTS_ON
 #define ALLOCATOR_IMPLEMENTATION
 #include "ecs_allocator.h"
 #undef ALLOCATOR_IMPLEMENTATION
+#include "cs251_pipe.h"
 
 
 
@@ -104,18 +106,31 @@ void displayThread(void* args)
     }
 }
 
-void threadEnqueueTest(void*)
+void threadPipeWrite(void* param)
 {
-    int last_global = global;
+    int pipe_id = *(int*)param;
     ecs::string msg("hello baby\n");
+    int last_global = global;
     while(1)
     {
         if(global - last_global > 10)
         {
             last_global = global;
             
-            cs251::consoleQueueInstance().enqueue(msg.c_str(), msg.c_str() + msg.size());
+            cs251::pipeFactoryInstance().write(pipe_id, (uint8_t*)msg.c_str(), msg.size());
         }
+    }
+}
+
+void threadPipeRead(void* param)
+{
+    int pipe_id = *(int*)param;
+    char buff[100];
+    while(1)
+    {
+        size_t n = cs251::pipeFactoryInstance().read(pipe_id, (uint8_t*)buff, 100);
+        buff[n+1] = '\x00';
+        printf("%s", buff);
     }
 }
 
@@ -175,10 +190,12 @@ int main() {
     
     // cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     
-    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    // cs251::schedulerInstance().create(displayThread, &mtx_cnt);
-    cs251::schedulerInstance().create(threadEnqueueTest, nullptr);
+    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    cs251::schedulerInstance().create(displayThread, &mtx_cnt);
+    int pipe_id = cs251::pipeFactoryInstance().open();
+    cs251::schedulerInstance().create(threadPipeRead, &pipe_id);
+    cs251::schedulerInstance().create(threadPipeWrite, &pipe_id);
     
     
     cs251::schedulerInstance().launchFirstTask();

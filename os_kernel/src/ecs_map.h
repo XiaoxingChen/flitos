@@ -10,6 +10,7 @@
 #define _ECS_MAP_H_
 
 #include "ecs_list.h"
+#include "ecs_assert.h"
 
 namespace ecs
 {
@@ -35,7 +36,7 @@ public:
         TValue ret;
         typename list<PairType>::iterator it = find_if(storage_.begin(), storage_.end(), 
             [&key](const PairType& kv) { return kv.first == key; });
-        // assert(it != storage_.end());
+        assert(it != storage_.end());
         return it->second;
     }
 
@@ -47,6 +48,8 @@ public:
     
 
     size_t size() const { return storage_.size(); }
+    void clear() { storage_.clear(); }
+
     void erase(const TKey& key)
     {
         typename list<PairType>::iterator it = find_if(storage_.begin(), storage_.end(), 
@@ -82,9 +85,22 @@ public:
         return ret;
     }
 
+    iterator insert(iterator pos, const PairType& pair_in)
+    {
+        return storage_.insert(pos, pair_in);
+    }
+
     TValue& operator [] (const TKey& key) 
     { 
-        return insert(PairType(key, TValue())).first->second;
+        pair<iterator, bool> ret;
+        typename list<PairType>::iterator it = find_if(storage_.begin(), storage_.end(), 
+            [&key](const PairType& kv) { return kv.first >= key; });
+        if(it != storage_.end() && it->first == key)
+        {
+            return it->second;
+        }
+
+        return insert(it, PairType(key, TValue()))->second;
     }
 #if 1
     size_t count(const TKey& key) const 
