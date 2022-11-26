@@ -1,6 +1,8 @@
 #include "utils.h"
 #include "nanoprintf.h"
+#if defined(VIRT_CLINT)
 #include "uart_printf.h"
+#endif
 #include <stddef.h>
 
 #if defined(__cplusplus)

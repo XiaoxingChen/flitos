@@ -64,7 +64,7 @@ void init(void) {
     }
 
     csr_write_mie(0x888);       // Enable all interrupt soruces
-    // csr_enable_interrupts();    // Global interrupt enable
+    csr_enable_interrupts();    // Global interrupt enable
     MTIMECMP_LOW = 1;
     MTIMECMP_HIGH = 0;
 }
@@ -84,7 +84,7 @@ extern "C"{
 #endif
 
 void c_interrupt_handler(uint32_t mcause) {
-    *nestCriticalCount() += 1;
+    increaseNestCriticalCount();
 
     int flag = handle_time_interrupt(mcause);
     global++;
@@ -108,7 +108,7 @@ void c_interrupt_handler(uint32_t mcause) {
     }
     cs251::schedulerInstance().inInterruptYield();
 
-    *nestCriticalCount() -= 1;
+    decreaseNestCriticalCount();
 }
 
 #ifdef __cplusplus
@@ -123,47 +123,48 @@ uint32_t writeTarget(uint32_t mem_handle, uint32_t value);
 extern "C"{
 #endif
 uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t call){
-    *nestCriticalCount() += 1;
+    increaseNestCriticalCount();
+    uint32_t ret = 0xffffffff;
 
     if(call == 0){
-        return global;
+        ret = global;
     } else if (call == 1) {
-        return CONTROLLER;
+        ret = CONTROLLER;
     }else if(call == 2){
-        return vip_seq;
+        ret = vip_seq;
     } else if (call == 5) {
         aaa++;
         register_handler(a0);
-        return 5;
+        ret = 5;
     }
     else if(call == 6){
-        return writeTargetMem(a0, a1, a2);
+        ret = writeTargetMem(a0, a1, a2);
     }else if(call == 7){
-        return writeTarget(a0, a1);
+        ret = writeTarget(a0, a1);
     }
     else if(call == 8)
     {
-        return hookFunctionPointer(a0);
+        ret = hookFunctionPointer(a0);
     }
     else if(call == 9)
     {
-        return cmd_seq;
+        ret = cmd_seq;
     }
     else if(call == 10)
     {
         typedef void (*f_thread)(void*);
         uint32_t thread_id = cs251::schedulerInstance().create((f_thread)a0, (void*)a1);
-        return thread_id;
+        ret = thread_id;
     }
     else if(call == 11)
     {
         cs251::schedulerInstance().inInterruptYield();
     }else if(call == 12)
     {
-        return (uint32_t)__global_pointer$;
+        ret = (uint32_t)__global_pointer$;
     }else if(call == 13)
     {
-        return (uint32_t)cs251::mutexFactoryInstance().create();
+        ret = (uint32_t)cs251::mutexFactoryInstance().create();
     }else if(call == 14)
     {
         cs251::mutexFactoryInstance().destroy(a0);
@@ -181,8 +182,8 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
         cs251::schedulerInstance().join(a0);
     }
 
-    *nestCriticalCount() -= 1;
-    return -1;
+    decreaseNestCriticalCount();
+    return ret;
 }
 #ifdef __cplusplus
 }
