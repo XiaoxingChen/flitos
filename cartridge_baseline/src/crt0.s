@@ -19,7 +19,7 @@ _start:
 .global getTicks, getStatus, getVideoInterruptSeq, hookFunction, getCmdInterruptSeq, registerHandler, getGlobalPointer
 .global writeTargetMem, writeTarget
 .global mutexInit, mutexDestroy
-.global threadCreate, threadYield, threadJoin
+.global threadCreateRaw, threadYield, threadJoin
 
 getTicks:
     li a5, 0
@@ -45,7 +45,7 @@ hookFunction:
 getCmdInterruptSeq:
     li a5, 9
     ecall  
-threadCreate:
+threadCreateRaw:
     li a5, 10
     ecall
 threadYield:

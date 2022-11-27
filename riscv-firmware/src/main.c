@@ -23,7 +23,7 @@ void idleThread(void* param)
     {
         // VIDEO_MEMORY[0x40 * 6] = '0' + cnt++ % 10;
         line_printf(6, "firmware cnt: %d", cnt++);
-        // cs251::thread_yield();
+        cs251::thread_yield();
     }
 }
 

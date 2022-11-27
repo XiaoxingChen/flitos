@@ -40,11 +40,15 @@ _interrupt_handler:
 _system_call:
     csrr    ra,mscratch
     csrw    mepc,ra
-    csrw    mscratch,gp
+    /*csrw    mscratch,gp*/
+    addi	sp,sp,-4
+    sw	    gp,0(sp)
     .option push
     .option norelax
     la gp, __global_pointer$
     .option pop
     call    c_system_call
-    csrr    gp,mscratch
+    /*csrr    gp,mscratch*/
+    lw	    gp,0(sp)
+    addi	sp,sp,4
     mret

@@ -153,7 +153,7 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
     else if(call == 10)
     {
         typedef void (*f_thread)(void*);
-        uint32_t thread_id = cs251::schedulerInstance().create((f_thread)a0, (void*)a1);
+        uint32_t thread_id = cs251::schedulerInstance().create((f_thread)a0, (void*)a1, a2);
         ret = thread_id;
     }
     else if(call == 11)
