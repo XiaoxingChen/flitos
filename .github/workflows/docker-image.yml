@@ -16,3 +16,16 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag riscv_console_dev
+
+    - name: run docker container
+      run: docker run -it -v $(pwd):/code --name riscv_console_run riscv_console_dev
+
+    - name: build firmware
+      run: docker exec --workdir /code/riscv-firmware riscv_console_run make
+
+    - name: build baseline
+      run: docker exec --workdir /code/cartridge_baseline riscv_console_run make
+
+    - name: build baseline
+      run: docker exec --workdir /code/riscv-cart riscv_console_run make
+
