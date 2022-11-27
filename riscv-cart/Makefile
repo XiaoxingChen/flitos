@@ -42,6 +42,7 @@ TARGET_OBJS =   $(OBJ_DIR)/main.o               \
 				$(OBJ_DIR)/printf.o               \
 				$(OBJ_DIR)/img_data.o               \
 				$(OBJ_DIR)/video_api.o               \
+				$(OBJ_DIR)/thread_api.o               \
                 $(OBJ_DIR)/startup.o
 
 all: directories $(BIN_DIR)/$(TARGET_NAME)
@@ -69,6 +70,9 @@ $(OBJ_DIR)/printf.o: $(BASELINE_INC_DIR)/printf.c
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)/video_api.o: $(BASELINE_INC_DIR)/video_api.c
+	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/thread_api.o: $(BASELINE_INC_DIR)/thread_api.c
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)/startup.o: $(BASELINE_INC_DIR)/startup.c

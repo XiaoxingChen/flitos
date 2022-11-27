@@ -21,7 +21,9 @@ extern "C" void context_switch(volatile size_t** oldsp, volatile size_t* newsp);
 extern "C" void disable_interrupts();
 extern "C" void enable_interrupts();
 extern "C" void startFirstTask( uint32_t stk_ptr );
-extern "C" uint8_t __global_pointer$[];
+extern "C" uint32_t global_ptr_read();
+extern "C" void global_ptr_write(uint32_t stk_ptr);
+// extern "C" uint8_t __global_pointer$[];
 
 
 namespace cs251
@@ -45,7 +47,7 @@ class ThreadControlBlock;
 class ThreadScheduler;
 class MutexFactory;
 
-void stub_wrapper(void (*f)(void*), void* arg);
+void stub_wrapper(void (*f)(void*), void* arg, size_t thread_global_ptr);
 void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb);
 inline ThreadScheduler& schedulerInstance();
 inline MutexFactory& mutexFactoryInstance();
@@ -66,7 +68,7 @@ public:
         if(!stack_ptr_) return;
         stack_ptr_ -= static_cast<size_t>(context_size);
         *(stack_ptr_ + static_cast<size_t>(offset_ra)) = reinterpret_cast<size_t>(stub_wrapper);
-        *(stack_ptr_ + static_cast<size_t>(offset_gp)) = reinterpret_cast<size_t>(__global_pointer$);
+        *(stack_ptr_ + static_cast<size_t>(offset_gp)) = global_ptr_read() ; // use os global pointer to context
         *(stack_ptr_ + static_cast<size_t>(offset_mstatus)) = 0x1880; //make sure interrupt is closed when context switch finished.
     }
 #if 0
@@ -84,7 +86,7 @@ public:
         state_ = ThreadState::eREADY;
     }
 #else
-    void init(void (*f)(void*), void* arg);
+    void init(void (*f)(void*), void* arg, size_t thread_global_ptr);
 #endif
 
     ~ThreadControlBlock()
@@ -140,16 +142,23 @@ public:
         finished_list_.clear();
     }
 
-    thread_id_t create(void (*f)(void*), void* arg)
+    thread_id_t create(void (*f)(void*), void* arg, size_t thread_global_ptr)
     {
         thread_counter_++;
         thread_id_t id = thread_counter_;
         id_tcb_map_[id] = ThreadControlBlock();
-        id_tcb_map_[id].init(f, arg);
+        id_tcb_map_[id].init(f, arg, thread_global_ptr);
         ready_list_.push_back(id);
         LOGD("create thread: %d\n", id);
         return id;
     }
+
+    thread_id_t create(void (*f)(void*), void* arg)
+    {
+        size_t thread_global_ptr = global_ptr_read();
+        return create(f, arg, thread_global_ptr);
+    }
+
 
     void launchFirstTask()
     {
@@ -515,11 +524,14 @@ inline int thread_exit()
     return 0;
 } 
 
-inline void stub_wrapper(void (*f)(void*), void* arg)
+inline void stub_wrapper(void (*f)(void*), void* arg, size_t thread_global_ptr)
 {
     // increaseTimeCompare(1000);
+    size_t os_global_ptr = global_ptr_read();
     enable_interrupts();
+    global_ptr_write(thread_global_ptr);
     (*f)(arg);
+    global_ptr_write(os_global_ptr);
     
     mutex_id_t mtx_for_join = schedulerInstance().idTcbMap().at(schedulerInstance().runningThreadID()).mutexForJoin();
     mutexFactoryInstance().unlock( mtx_for_join );
@@ -538,7 +550,7 @@ inline int thread_yield()
     return 0;
 }
 
-inline void ThreadControlBlock::init(void (*f)(void*), void* arg)
+inline void ThreadControlBlock::init(void (*f)(void*), void* arg, size_t thread_global_ptr)
 {
     // thread_id_ = threadCounter();
     stk_size_ = INITIAL_STACK_SIZE;
@@ -547,6 +559,7 @@ inline void ThreadControlBlock::init(void (*f)(void*), void* arg)
     program_counter_ = reinterpret_cast<void*>(stub_wrapper);
 
     pushDummySwitchFrame();
+    *(stack_ptr_ + static_cast<size_t>(offset_a2)) = thread_global_ptr;
     *(stack_ptr_ + static_cast<size_t>(offset_a1)) = reinterpret_cast<size_t>(arg);
     *(stack_ptr_ + static_cast<size_t>(offset_a0)) = reinterpret_cast<size_t>(f);
     state_ = ThreadState::eREADY;

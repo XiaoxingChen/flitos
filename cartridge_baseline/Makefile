@@ -37,6 +37,7 @@ TARGET_OBJS =   $(OBJ_DIR)/main.o               \
 				$(OBJ_DIR)/printf.o               \
 				$(OBJ_DIR)/workarounds.o               \
 				$(OBJ_DIR)/video_api.o               \
+				$(OBJ_DIR)/thread_api.o               \
                 $(OBJ_DIR)/startup.o
 
 all: directories $(BIN_DIR)/$(TARGET_NAME)
