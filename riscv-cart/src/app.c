@@ -47,9 +47,9 @@ void initVideoSetting() {
 }
 
 
-struct pipeBlock {
+struct pillarBlock {
     /**
-     * x and y represent the top-left point of the pipe
+     * x and y represent the top-left point of the pillar
      */
     int x;
     int y;
@@ -60,9 +60,9 @@ struct pipeBlock {
 
     int controlIndex;
 };
-struct pipe {
+struct pillar {
     /**
-     * x and y represent the top-left point of the pipe
+     * x and y represent the top-left point of the pillar
      */
     int x;
     int y;
@@ -75,134 +75,126 @@ struct pipe {
     /**
      *
      */
-    struct pipeBlock blocks[3];
+    struct pillarBlock blocks[3];
 };
 
-volatile struct pipe bottomPillar;
-volatile struct pipe topPillar;
 
-volatile int index_data = 4;
-void createAPipe(struct pipe currentPipe) {
-    for (int i = 0; i < currentPipe.block_number; i++) {
-        struct pipeBlock tempBlock = currentPipe.blocks[i];
-        setLargeSpriteControl(tempBlock.controlIndex, 64, 64, tempBlock.x, tempBlock.y, 1);
-        setLargeSpriteDataImage(tempBlock.controlIndex, bird_img_1);
+
+int createAPillar(struct pillar *currentPillar,int index_data) {
+    for (int i = 0; i < currentPillar->block_number; i++) {
+        setLargeSpriteControl(index_data, 64, 64, currentPillar->blocks[i].x, currentPillar->blocks[i].y, 1);
+        setLargeSpriteDataImage(index_data, bird_img_1);
+        currentPillar->blocks[i].controlIndex=index_data;
+        index_data++;
     }
+    return index_data;
 }
 
-volatile int iddddd=0;
 
-void movePillar(struct pipe currentPillar,int offset){
-    linePrintf(12+iddddd, "pillar=%d", currentPillar.block_number);
-    iddddd++;
-
-    for(int i=0;i<currentPillar.block_number;i++){
-        struct pipeBlock tempBlock = currentPillar.blocks[i];
-        linePrintf(12+iddddd, "control id=%d, new x=%d,y=%d", tempBlock.controlIndex,tempBlock.x,tempBlock.y);
-        tempBlock.x=tempBlock.x-offset;
-        setLargeSpriteControl(tempBlock.controlIndex, 64, 64, tempBlock.x, tempBlock.y, 1);
-        iddddd++;
+int movePillar(struct pillar *currentPillar, int offset) {
+    for (int i = 0; i < currentPillar->block_number; i++) {
+        currentPillar->blocks[i].x = currentPillar->blocks[i].x - offset;
+        if(currentPillar->blocks[i].x < -64){
+            currentPillar->blocks[i].x = 512;
+        }
+        setLargeSpriteControl(currentPillar->blocks[i].controlIndex, 64, 64, currentPillar->blocks[i].x, currentPillar->blocks[i].y, 1);
     }
+    return 0;
 }
 
-struct pipe createABottom(int x, int height){
-    bottomPillar.x = x;
-    bottomPillar.y = 288 - height;
-    bottomPillar.height = height;
+void createABottom(int x, int height, struct pillar *bottomPillar) {
+    bottomPillar->x = x;
+    bottomPillar->y = 288 - height;
+    bottomPillar->height = height;
     // blocks of bottom
     int remaining_height = height;
     int idx_blocks = 0;
     while (remaining_height > 0) {
-        struct pipeBlock tempBlock;
+        struct pillarBlock tempBlock;
         tempBlock.height = 64;
-        tempBlock.x = bottomPillar.x;
-        tempBlock.y = idx_blocks * tempBlock.height + 288 - bottomPillar.height;
-        tempBlock.controlIndex=index_data++;
-        bottomPillar.blocks[idx_blocks] = tempBlock;
+        tempBlock.x = bottomPillar->x;
+        tempBlock.y = idx_blocks * tempBlock.height + 288 - bottomPillar->height;
+        bottomPillar->blocks[idx_blocks] = tempBlock;
 
         remaining_height = remaining_height - tempBlock.height;
         idx_blocks++;
     }
-    bottomPillar.block_number = idx_blocks;
-    linePrintf(6+idx_blocks, "bottom blockNumber=%d",bottomPillar.block_number );
-    return bottomPillar;
+    bottomPillar->block_number = idx_blocks;
+    linePrintf(6 + idx_blocks, "bottom blockNumber=%d", bottomPillar->block_number);
 }
 
-struct pipe createATop(int x, int height){
-    topPillar.height=height;
-    topPillar.x=x;
-    topPillar.y=0;
+void createATop(int x, int height,struct pillar *topPillar) {
+    topPillar->height = height;
+    topPillar->x = x;
+    topPillar->y = 0;
 
-    int data_height =64;
-    int remaining = height%data_height;
+    int data_height = 64;
+    int remaining = height % data_height;
 
-    int numbers = height/data_height;
+    int numbers = height / data_height;
 
-    int idx_blocks =0;
-    if(remaining!=0){
-        topPillar.block_number = (numbers+1);
+    int idx_blocks = 0;
+    if (remaining != 0) {
+        topPillar->block_number = (numbers + 1);
         // generate a block
-        struct pipeBlock remaining_block;
+        struct pillarBlock remaining_block;
         remaining_block.height = remaining;
-        remaining_block.x = topPillar.x;
-        remaining_block.y = remaining-data_height;
-        remaining_block.controlIndex=index_data++;
+        remaining_block.x = topPillar->x;
+        remaining_block.y = remaining - data_height;
 
-        topPillar.blocks[idx_blocks]=remaining_block;
+        topPillar->blocks[idx_blocks] = remaining_block;
         idx_blocks++;
-    }else{
-        topPillar.block_number = numbers;
+    } else {
+        topPillar->block_number = numbers;
     }
 
-    for(int i=0;i<numbers;i++){
-        struct pipeBlock tempBlock;
+    for (int i = 0; i < numbers; i++) {
+        struct pillarBlock tempBlock;
         tempBlock.height = data_height;
-        tempBlock.x = topPillar.x;
-        tempBlock.y = remaining+64*i;
-        tempBlock.controlIndex=index_data++;
-        topPillar.blocks[idx_blocks]=tempBlock;
+        tempBlock.x = topPillar->x;
+        tempBlock.y = remaining + 64 * i;
+        topPillar->blocks[idx_blocks] = tempBlock;
         idx_blocks++;
     }
 
-    return topPillar;
 }
 
 
-void createAPairOfPipe() {
+
+void movePillarThread(void *param) {
+    struct pillar topPillar;
+    struct pillar bottomPillar;
     // x position
-    int x_position=200;
+    int x_position = 200;
     // bottom
     int bottom_height = 110;
     //gap
     int gap = 0;
     // top
-    int top_height = 210-bottom_height-gap;
+    int top_height = 210 - bottom_height - gap;
+    // the index of the large sprites
+    int index_data = 5;
 
-    // build the bottom pillar
-    createABottom(x_position,bottom_height);
+    /**
+     * step 1: generate pillars
+     */
+    createABottom(x_position, bottom_height, &bottomPillar);
+    createATop(x_position, top_height, &topPillar);
 
-    // build the top pillar
-    createATop(x_position,top_height);
+    index_data = createAPillar(&bottomPillar,index_data);
+    index_data = createAPillar(&topPillar,index_data);
+    linePrintf(14, "bottom 0 control id=%d,top 0 id=%d", bottomPillar.blocks[0].controlIndex,topPillar.blocks[0].controlIndex);
 
-    //draw a pair of pillars
-    createAPipe(bottomPillar);
-    createAPipe(topPillar);
-
-    linePrintf(30, "bottom 0 control id = %d",bottomPillar.blocks[0].controlIndex );
-
-    // store the pair of pillars into the list of pillars.
-}
-
-
-
-void movePillarThread(void* param){
-    int movement_offset=1;
-    while(1){
-        if(topPillar.block_number!=0){
-            movePillar(topPillar,movement_offset);
+    /**
+     * step 2: move pillars in a dead-loop
+     */
+    int movement_offset = 1;
+    while (1) {
+        if (topPillar.block_number != 0) {
+            movePillar(&topPillar, movement_offset);
         }
-        if(bottomPillar.block_number!=0){
-            movePillar(bottomPillar,movement_offset);
+        if (bottomPillar.block_number != 0) {
+            movePillar(&bottomPillar, movement_offset);
         }
         threadYield();
     }

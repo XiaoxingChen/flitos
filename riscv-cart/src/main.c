@@ -65,7 +65,6 @@ int main() {
     thread_id_t th3 = threadCreate(threadCommandButtonMonitor, NULL);
 
 
-    createAPairOfPipe();
     thread_id_t th4 = threadCreate(movePillarThread, NULL);
 
 
