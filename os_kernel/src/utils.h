@@ -77,6 +77,8 @@ int32_t *nestCriticalCount();
 void increaseNestCriticalCount();
 void decreaseNestCriticalCount();
 int inCritical();
+void global_ptr_write(uint32_t val);
+uint32_t global_ptr_read(void);
 
 #if defined(__cplusplus)
 }

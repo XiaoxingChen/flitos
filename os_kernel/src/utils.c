@@ -65,6 +65,18 @@ int line_printf(int idx, const char *format, ...)
     return n;
 }
 
+void global_ptr_write(uint32_t val)
+{
+    asm volatile ("mv gp, %0" : : "r"(val));
+}
+
+uint32_t global_ptr_read(void)
+{
+    uint32_t result;
+    asm volatile ("mv %0, gp" : "=r"(result));
+    return result;
+}
+
 
 #if defined(__cplusplus)
 }
