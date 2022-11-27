@@ -85,10 +85,16 @@ int countXPosition(int i, int width) {
 }
 
 
+uint8_t pillar_img[64*64];
+
 int createAPillar(struct pillar *currentPillar, int index_data) {
+    for(int i = 0; i < 64*64; i++)
+    {
+        pillar_img[i] = 5;
+    }
     for (int i = 0; i < currentPillar->block_number; i++) {
         setLargeSpriteControl(index_data, 64, 64, currentPillar->blocks[i].x, currentPillar->blocks[i].y, 1);
-        setLargeSpriteDataImage(index_data, bird_img_1);
+        setLargeSpriteDataImage(index_data, pillar_img);
         currentPillar->blocks[i].controlIndex = index_data;
         index_data++;
     }
