@@ -14,8 +14,8 @@ uint32_t threadYield();
 void threadJoin(thread_id_t tid);
 mutex_id_t mutexInit();
 void mutexDestroy(mutex_id_t mtx_id);
-void mutexAcquire(mutex_id_t mtx_id);
-void mutexRelease(mutex_id_t mtx_id);
+void mutexLock(mutex_id_t mtx_id);
+void mutexUnlock(mutex_id_t mtx_id);
 
 #ifdef __cplusplus
 }

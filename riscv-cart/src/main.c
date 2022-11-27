@@ -16,6 +16,7 @@ void initVideoSetting();
 struct position{
     uint32_t x;
     uint32_t y;
+    mutex_id_t mtx;
 };
 
 /**
@@ -71,6 +72,7 @@ int main() {
     struct position flappyBird;
     flappyBird.y=30;
     flappyBird.x=30;
+    flappyBird.mtx = mutexInit();
     thread_id_t th1 = threadCreate(idleThread, NULL);
     thread_id_t th2 = threadCreate(threadGraphics, &flappyBird);
     thread_id_t th3 = threadCreate(threadCommandButtonMonitor, NULL);
@@ -93,38 +95,40 @@ void threadGraphics(void* param)
 {
     struct position *flappyBird = (struct position* ) param;
     int x_pos = 18;
-    uint32_t sprite_x = flappyBird->x;
-    uint32_t sprite_y = flappyBird->y;
+    int sprite_inc_x;
+    int sprite_inc_y;
     int move_speed = 5;
     uint32_t time_counter = 0;
     uint32_t last_time = 0;
     while (1) {
         global = getTicks();
+        sprite_inc_x = 0;
+        sprite_inc_y = 0;
         if(global != last_time){
             linePrintf(0, "video interrupt: %d", getVideoInterruptSeq());
             controller_status = getStatus();
             if(controller_status){
                 // VIDEO_MEMORY[x_pos] = ' ';
                 if(controller_status & 0x1){
-                    sprite_x -= move_speed;
+                    sprite_inc_x = -move_speed;
                     if(x_pos & 0x3F){
                         x_pos--;
                     }
                 }
                 if(controller_status & 0x2){
-                    sprite_y -= move_speed;
+                    sprite_inc_y = -move_speed;
                     if(x_pos >= 0x40){
                         x_pos -= 0x40;
                     }
                 }
                 if(controller_status & 0x4){
-                    sprite_y += move_speed;
+                    sprite_inc_y = move_speed;
                     if(x_pos < 0x8C0){
                         x_pos += 0x40;
                     }
                 }
                 if(controller_status & 0x8){
-                    sprite_x += move_speed;
+                    sprite_inc_x = move_speed;
                     if((x_pos & 0x3F) != 0x3F){
                         x_pos++;
                     }
@@ -134,12 +138,15 @@ void threadGraphics(void* param)
 
 
             }
+            mutexLock(flappyBird->mtx);
+            flappyBird->x += sprite_inc_x;
+            flappyBird->y +=sprite_inc_y;
+            mutexUnlock(flappyBird->mtx);
             for(int i = 0; i < 3; i++)
             {
-                setLargeSpriteControl(i, 64, 64, sprite_x, sprite_y, i == global % 3);
+                setLargeSpriteControl(i, 64, 64, flappyBird->x, flappyBird->y, i == global % 3);
             }
-            flappyBird->x =sprite_x;
-            flappyBird->y=sprite_y;
+            
             last_time = global;
         } //global != last_time
         threadYield();
@@ -158,17 +165,22 @@ void gravityThread(void *param) {
         global2 = getTicks();
         if(global2 - last_time >=move_frequency){
             linePrintf(11+count111, "bird y=%d", flappyBird->y);
-            count111++;
+            // count111++;
+            mutexLock(flappyBird->mtx);
             uint32_t sprite_x = flappyBird->x;
             uint32_t sprite_y = flappyBird->y;
             sprite_y +=2;
+            flappyBird->y=sprite_y;
+            mutexUnlock(flappyBird->mtx);
             for(int i = 0; i < 3; i++)
             {
                 setLargeSpriteControl(i, 64, 64, sprite_x, sprite_y, i == global2 % 3);
             }
-            flappyBird->y=sprite_y;
+            
+            
+            last_time=global2;
         }
-        last_time=global2;
+        
         threadYield();
     }
 }
