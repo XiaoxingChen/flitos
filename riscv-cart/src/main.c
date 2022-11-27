@@ -153,12 +153,12 @@ void gravityThread(void *param) {
     uint32_t last_time = 0;
     int count111=0;
     int global2=42;
+    struct position *flappyBird = (struct position*) param;
     while (1) {
         global2 = getTicks();
         if(global2 - last_time >=move_frequency){
-            struct position *flappyBird = (struct position*) param;
             linePrintf(11+count111, "bird y=%d", flappyBird->y);
-
+            count111++;
             uint32_t sprite_x = flappyBird->x;
             uint32_t sprite_y = flappyBird->y;
             sprite_y +=2;
