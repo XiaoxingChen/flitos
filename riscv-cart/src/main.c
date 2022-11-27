@@ -28,6 +28,7 @@ uint32_t myHandler2(uint32_t code);
 // volatile char *MODE_CONTROL_REG = (volatile char *)(0x50000000 + 0xFF414);
 
 void threadGraphics(void* param);
+void movePillarThread(void* param);
 
 void idleThread(void* param)
 {
@@ -53,6 +54,7 @@ void threadCommandButtonMonitor(void* param)
     
 }
 
+
 void createAPairOfPipe();
 
 int main() {
@@ -62,7 +64,9 @@ int main() {
     thread_id_t th2 = threadCreate(threadGraphics, NULL);
     thread_id_t th3 = threadCreate(threadCommandButtonMonitor, NULL);
 
+
     createAPairOfPipe();
+    thread_id_t th4 = threadCreate(movePillarThread, NULL);
 
 
 
