@@ -18,7 +18,7 @@ jobs:
       run: docker build . --file Dockerfile --tag riscv_console_dev
 
     - name: run docker container
-      run: docker run -it -v $(pwd):/code --name riscv_console_run riscv_console_dev
+      run: docker run -v ${{github.workspace}}:/code --name riscv_console_run riscv_console_dev
 
     - name: build firmware
       run: docker exec --workdir /code/riscv-firmware riscv_console_run make
