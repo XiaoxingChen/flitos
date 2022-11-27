@@ -79,9 +79,9 @@ struct pillar {
 
 int countXPosition(int i, int width) {
     if (i == 0) {
-        return 50;
+        return 100;
     }
-    return 50 + (64 + 100) * i;
+    return 100 + (64 + 100) * i;
 }
 
 

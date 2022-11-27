@@ -169,7 +169,7 @@ void gravityThread(void *param) {
             mutexLock(flappyBird->mtx);
             uint32_t sprite_x = flappyBird->x;
             uint32_t sprite_y = flappyBird->y;
-            sprite_y +=2;
+            sprite_y +=3;
             flappyBird->y=sprite_y;
             mutexUnlock(flappyBird->mtx);
             for(int i = 0; i < 3; i++)
