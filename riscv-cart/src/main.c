@@ -12,6 +12,12 @@ uint32_t getVideoInterruptSeq(void);
 uint32_t getCmdInterruptSeq(void);
 void initVideoSetting();
 
+
+struct position{
+    uint32_t x;
+    uint32_t y;
+};
+
 /**
  * interrupt handlers
  */
@@ -29,6 +35,7 @@ uint32_t myHandler2(uint32_t code);
 
 void threadGraphics(void* param);
 void movePillarThread(void* param);
+void gravityThread(void* param);
 
 void idleThread(void* param)
 {
@@ -60,12 +67,17 @@ void createAPairOfPipe();
 int main() {
 
     initVideoSetting();
+    // fetch bird position struct.
+    struct position flappyBird;
+    flappyBird.y=30;
+    flappyBird.x=30;
     thread_id_t th1 = threadCreate(idleThread, NULL);
-    thread_id_t th2 = threadCreate(threadGraphics, NULL);
+    thread_id_t th2 = threadCreate(threadGraphics, &flappyBird);
     thread_id_t th3 = threadCreate(threadCommandButtonMonitor, NULL);
 
+    thread_id_t th4 = threadCreate(gravityThread, &flappyBird);
 
-    thread_id_t th4 = threadCreate(movePillarThread, NULL);
+    thread_id_t th5 = threadCreate(movePillarThread, NULL);
 
 
 
@@ -79,9 +91,10 @@ int main() {
 
 void threadGraphics(void* param)
 {
+    struct position *flappyBird = (struct position* ) param;
     int x_pos = 18;
-    uint32_t sprite_x = 30;
-    uint32_t sprite_y = 30;
+    uint32_t sprite_x = flappyBird->x;
+    uint32_t sprite_y = flappyBird->y;
     int move_speed = 5;
     uint32_t time_counter = 0;
     uint32_t last_time = 0;
@@ -118,11 +131,15 @@ void threadGraphics(void* param)
                 }
                 // setLargeSpriteControl(0, 64, 64, sprite_x, sprite_y, 1);
                 // VIDEO_MEMORY[x_pos] = 'X';
+
+
             }
             for(int i = 0; i < 3; i++)
             {
                 setLargeSpriteControl(i, 64, 64, sprite_x, sprite_y, i == global % 3);
             }
+            flappyBird->x =sprite_x;
+            flappyBird->y=sprite_y;
             last_time = global;
         } //global != last_time
         threadYield();
@@ -131,3 +148,27 @@ void threadGraphics(void* param)
     } // while(1)
 }
 
+void gravityThread(void *param) {
+    int move_frequency =3;
+    uint32_t last_time = 0;
+    int count111=0;
+    int global2=42;
+    while (1) {
+        global2 = getTicks();
+        if(global2 - last_time >=move_frequency){
+            struct position *flappyBird = (struct position*) param;
+            linePrintf(11+count111, "bird y=%d", flappyBird->y);
+
+            uint32_t sprite_x = flappyBird->x;
+            uint32_t sprite_y = flappyBird->y;
+            sprite_y +=2;
+            for(int i = 0; i < 3; i++)
+            {
+                setLargeSpriteControl(i, 64, 64, sprite_x, sprite_y, i == global2 % 3);
+            }
+            flappyBird->y=sprite_y;
+        }
+        last_time=global2;
+        threadYield();
+    }
+}

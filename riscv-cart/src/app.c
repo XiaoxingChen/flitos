@@ -46,7 +46,6 @@ void initVideoSetting() {
 
 }
 
-
 struct pillarBlock {
     /**
      * x and y represent the top-left point of the pillar
@@ -79,7 +78,10 @@ struct pillar {
 };
 
 int countXPosition(int i, int width) {
-    return (i + 1) * 80 + i * 64;
+    if (i == 0) {
+        return 50;
+    }
+    return 50 + (64 + 100) * i;
 }
 
 
