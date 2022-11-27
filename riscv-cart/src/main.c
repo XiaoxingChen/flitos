@@ -53,12 +53,18 @@ void threadCommandButtonMonitor(void* param)
     
 }
 
+void createAPairOfPipe();
+
 int main() {
 
     initVideoSetting();
     thread_id_t th1 = threadCreate(idleThread, NULL);
     thread_id_t th2 = threadCreate(threadGraphics, NULL);
     thread_id_t th3 = threadCreate(threadCommandButtonMonitor, NULL);
+
+    createAPairOfPipe();
+
+
 
     // threadJoin(th1);
     // threadJoin(th2);
