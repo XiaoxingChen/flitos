@@ -78,13 +78,16 @@ struct pillar {
     struct pillarBlock blocks[3];
 };
 
+int countXPosition(int i, int width) {
+    return (i + 1) * 80 + i * 64;
+}
 
 
-int createAPillar(struct pillar *currentPillar,int index_data) {
+int createAPillar(struct pillar *currentPillar, int index_data) {
     for (int i = 0; i < currentPillar->block_number; i++) {
         setLargeSpriteControl(index_data, 64, 64, currentPillar->blocks[i].x, currentPillar->blocks[i].y, 1);
         setLargeSpriteDataImage(index_data, bird_img_1);
-        currentPillar->blocks[i].controlIndex=index_data;
+        currentPillar->blocks[i].controlIndex = index_data;
         index_data++;
     }
     return index_data;
@@ -94,13 +97,15 @@ int createAPillar(struct pillar *currentPillar,int index_data) {
 int movePillar(struct pillar *currentPillar, int offset) {
     for (int i = 0; i < currentPillar->block_number; i++) {
         currentPillar->blocks[i].x = currentPillar->blocks[i].x - offset;
-        if(currentPillar->blocks[i].x < -64){
+        if (currentPillar->blocks[i].x < -64) {
             currentPillar->blocks[i].x = 512;
         }
-        setLargeSpriteControl(currentPillar->blocks[i].controlIndex, 64, 64, currentPillar->blocks[i].x, currentPillar->blocks[i].y, 1);
+        setLargeSpriteControl(currentPillar->blocks[i].controlIndex, 64, 64, currentPillar->blocks[i].x,
+                              currentPillar->blocks[i].y, 1);
     }
     return 0;
 }
+
 
 void createABottom(int x, int height, struct pillar *bottomPillar) {
     bottomPillar->x = x;
@@ -120,10 +125,20 @@ void createABottom(int x, int height, struct pillar *bottomPillar) {
         idx_blocks++;
     }
     bottomPillar->block_number = idx_blocks;
-    linePrintf(6 + idx_blocks, "bottom blockNumber=%d", bottomPillar->block_number);
 }
 
-void createATop(int x, int height,struct pillar *topPillar) {
+void createBottoms(struct pillar *pillars) {
+    int heights[3] = {99, 130, 110};
+    for (int i = 0; i < 3; i++) {
+        int x = countXPosition(i, 64);
+        int height = heights[i];
+        struct pillar tempBottom;
+        createABottom(x, height, &tempBottom);
+        pillars[i] = tempBottom;
+    }
+}
+
+void createATop(int x, int height, struct pillar *topPillar) {
     topPillar->height = height;
     topPillar->x = x;
     topPillar->y = 0;
@@ -159,44 +174,81 @@ void createATop(int x, int height,struct pillar *topPillar) {
 
 }
 
+void createTops(struct pillar *pillars) {
+    int heights[3] = {104, 64, 110};
+    for (int i = 0; i < 3; i++) {
+        int x = countXPosition(i, 64);
+        int height = heights[i];
+        struct pillar tempTop;
+        createATop(x, height, &tempTop);
+        pillars[i + 3] = tempTop;
+    }
+}
 
+//void movePillarThread(void *param) {
+//
+//    struct pillar topPillar;
+//    struct pillar bottomPillar;
+//    // x position
+//    int x_position = 200;
+//    // bottom
+//    int bottom_height = 110;
+//    //gap
+//    int gap = 0;
+//    // top
+//    int top_height = 210 - bottom_height - gap;
+//    // the index of the large sprites
+//    int index_data = 5;
+//
+//    /**
+//     * step 1: generate pillars
+//     */
+//    createABottom(x_position, bottom_height, &bottomPillar);
+//    createATop(x_position, top_height, &topPillar);
+//
+//    index_data = createAPillar(&bottomPillar,index_data);
+//    index_data = createAPillar(&topPillar,index_data);
+//    linePrintf(14, "bottom 0 control id=%d,top 0 id=%d", bottomPillar.blocks[0].controlIndex,topPillar.blocks[0].controlIndex);
+//
+//    /**
+//     * step 2: move pillars in a dead-loop
+//     */
+//    int movement_offset = 1;
+//    while (1) {
+//        if (topPillar.block_number != 0) {
+//            movePillar(&topPillar, movement_offset);
+//        }
+//        if (bottomPillar.block_number != 0) {
+//            movePillar(&bottomPillar, movement_offset);
+//        }
+//        threadYield();
+//    }
+//}
 
 void movePillarThread(void *param) {
-    struct pillar topPillar;
-    struct pillar bottomPillar;
-    // x position
-    int x_position = 200;
-    // bottom
-    int bottom_height = 110;
-    //gap
-    int gap = 0;
-    // top
-    int top_height = 210 - bottom_height - gap;
+
+    // an array contains 3-pairs of pillars
+    struct pillar pillars[6];
+    createBottoms(pillars);
+    createTops(pillars);
     // the index of the large sprites
     int index_data = 5;
 
     /**
      * step 1: generate pillars
      */
-    createABottom(x_position, bottom_height, &bottomPillar);
-    createATop(x_position, top_height, &topPillar);
-
-    index_data = createAPillar(&bottomPillar,index_data);
-    index_data = createAPillar(&topPillar,index_data);
-    linePrintf(14, "bottom 0 control id=%d,top 0 id=%d", bottomPillar.blocks[0].controlIndex,topPillar.blocks[0].controlIndex);
+    for (int i = 0; i < 6; i++) {
+        index_data = createAPillar(&pillars[i], index_data);
+    }
 
     /**
      * step 2: move pillars in a dead-loop
      */
-    int movement_offset = 1;
+    int movement_offset = 2;
     while (1) {
-        if (topPillar.block_number != 0) {
-            movePillar(&topPillar, movement_offset);
-        }
-        if (bottomPillar.block_number != 0) {
-            movePillar(&bottomPillar, movement_offset);
+        for (int j = 0; j < 6; j++) {
+            movePillar(&pillars[j], movement_offset);
         }
         threadYield();
     }
 }
-
