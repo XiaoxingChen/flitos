@@ -34,7 +34,8 @@ enum ThreadState
     eREADY,
     eRUNNING,
     eWAITING,
-    eFINISHED
+    eFINISHED,
+    eUNKNOWN
 };
 
 // constexpr size_t SIZE_OF_POPAD = 14;
@@ -104,6 +105,7 @@ public:
     // }
 
     mutex_id_t mutexForJoin() const { return mtx_for_join_; }
+    cond_id_t condForJoin() const { return cond_for_join_; }
     void setPreemption(bool on)
     {
         if(on) preemption_on_ ++;
@@ -126,6 +128,7 @@ private:
     int preemption_on_ = 1;
     ThreadState state_ = eINIT;
     mutex_id_t mtx_for_join_ = -1;
+    cond_id_t cond_for_join_ = -1;
 };
 
 
@@ -301,6 +304,14 @@ public:
     void exit()
     {
         switchCurrentThreadTo(ThreadState::eFINISHED);
+    }
+
+    ThreadState threadState( thread_id_t tid ) const
+    {
+        if(tid > thread_counter_) return ThreadState::eUNKNOWN;
+        auto it = id_tcb_map_.find(tid);
+        if(it == id_tcb_map_.end()) return ThreadState::eFINISHED;
+        return it->second.state();
     }
 
     thread_id_t runningThreadID() const { return running_thread_id_; }
@@ -533,8 +544,8 @@ inline void stub_wrapper(void (*f)(void*), void* arg, size_t thread_global_ptr)
     (*f)(arg);
     global_ptr_write(os_global_ptr);
     
-    mutex_id_t mtx_for_join = schedulerInstance().idTcbMap().at(schedulerInstance().runningThreadID()).mutexForJoin();
-    mutexFactoryInstance().unlock( mtx_for_join );
+    cond_id_t cond_for_join = schedulerInstance().idTcbMap().at(schedulerInstance().runningThreadID()).condForJoin();
+    condFactoryInstance().notifyAll( cond_for_join );
     thread_exit();
 }
 
@@ -564,17 +575,24 @@ inline void ThreadControlBlock::init(void (*f)(void*), void* arg, size_t thread_
     *(stack_ptr_ + static_cast<size_t>(offset_a0)) = reinterpret_cast<size_t>(f);
     state_ = ThreadState::eREADY;
 
-    preemption_on_ = 1;
+    
+    mtx_for_join_ = mutexFactoryInstance().create();
+    cond_for_join_ = condFactoryInstance().create();
 
-    // mtx_for_join_ = mutexFactoryInstance().create();
-    // mutexFactoryInstance().lock(mtx_for_join_);
+    preemption_on_ = 1;
 }
 
 inline void ThreadScheduler::join( thread_id_t tid )
 {
-    // mutex_id_t mtx_for_join = id_tcb_map_[tid].mutexForJoin();
-    // mutexFactoryInstance().lock(mtx_for_join);
-    // mutexFactoryInstance().unlock(mtx_for_join);
+    mutex_id_t mtx_for_join = id_tcb_map_[tid].mutexForJoin();
+    cond_id_t cond_for_join = id_tcb_map_[tid].condForJoin();
+    mutexFactoryInstance().lock(mtx_for_join);
+    assert(threadState(tid) != ThreadState::eUNKNOWN);
+    while(threadState(tid) != ThreadState::eFINISHED)
+    {
+        condFactoryInstance().wait(cond_for_join, mtx_for_join);
+    }
+    mutexFactoryInstance().unlock(mtx_for_join);
 }
 
 #ifdef CS251_OS_STATIC_OBJECTS_ON

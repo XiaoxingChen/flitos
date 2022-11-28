@@ -129,7 +129,7 @@ void threadPipeRead(void* param)
     while(1)
     {
         size_t n = cs251::pipeFactoryInstance().read(pipe_id, (uint8_t*)buff, 100);
-        buff[n+1] = '\x00';
+        buff[n] = '\x00';
         printf("%s", buff);
     }
 }
@@ -146,6 +146,27 @@ void initForIdleThread()
 }
 #endif
 void increaseTimeCompare(uint32_t val);
+
+void threadTestJoin1(void*)
+{
+    int last_global = global;
+    for(int i = 0; i < 10; i++)
+    {
+        while(global - last_global < 10) 
+        {
+            cs251::schedulerInstance().yield();
+        }
+        last_global = global;
+    }
+    printf("finish thread test join1\n");
+}
+
+void threadTestJoin2(void*)
+{
+    auto th_join_1 = cs251::schedulerInstance().create(threadTestJoin1, nullptr);
+    cs251::schedulerInstance().join(th_join_1);
+    printf("finish thread test join2\n");
+}
 
 namespace cs251
 {
@@ -190,12 +211,15 @@ int main() {
     
     // cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
     
-    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    cs251::schedulerInstance().create(displayThread, &mtx_cnt);
+    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
+    // cs251::schedulerInstance().create(displayThread, &mtx_cnt);
+
     int pipe_id = cs251::pipeFactoryInstance().open();
     cs251::schedulerInstance().create(threadPipeRead, &pipe_id);
     cs251::schedulerInstance().create(threadPipeWrite, &pipe_id);
+
+    cs251::schedulerInstance().create(threadTestJoin2, nullptr);
     
     
     cs251::schedulerInstance().launchFirstTask();

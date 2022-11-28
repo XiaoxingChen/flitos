@@ -111,6 +111,25 @@ public:
         return 1; /* it.first == key */
     }
 #endif
+
+    iterator find(const TKey& key)
+    {
+        return find_if(storage_.begin(), storage_.end(), 
+            [&key](const PairType& kv) { return kv.first == key; });
+    }
+
+    const_iterator find(const TKey& key) const
+    {
+        return find_if(storage_.begin(), storage_.end(), 
+            [&key](const PairType& kv) { return kv.first == key; });
+    }
+
+    iterator begin() { return storage_.begin(); }
+    const_iterator begin() const { return storage_.begin(); }
+
+    iterator end() { return storage_.end(); }
+    const_iterator end() const { return storage_.end(); }
+    
 private:
     list<PairType> storage_;
 };
