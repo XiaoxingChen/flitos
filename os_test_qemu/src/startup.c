@@ -100,6 +100,7 @@ void c_interrupt_handler(void){
     // MTIMECMP_LOW = NewCompare;
     increaseTimeCompare(5000);
     global++;
+    cs251::sleepTimerInstance().updateTick();
     controller_status = CONTROLLER;
 #if 1
     cs251::schedulerInstance().inInterruptYield();

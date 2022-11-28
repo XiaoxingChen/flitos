@@ -110,15 +110,10 @@ void threadPipeWrite(void* param)
 {
     int pipe_id = *(int*)param;
     ecs::string msg("hello baby\n");
-    int last_global = global;
     while(1)
     {
-        if(global - last_global > 10)
-        {
-            last_global = global;
-            
-            cs251::pipeFactoryInstance().write(pipe_id, (uint8_t*)msg.c_str(), msg.size());
-        }
+        cs251::sleepTimerInstance().sleep(400);
+        cs251::pipeFactoryInstance().write(pipe_id, (uint8_t*)msg.c_str(), msg.size());
     }
 }
 
@@ -150,14 +145,14 @@ void increaseTimeCompare(uint32_t val);
 void threadTestJoin1(void*)
 {
     int last_global = global;
-    for(int i = 0; i < 10; i++)
+    
+    for(int i = 0; i < 50; i++)
     {
-        while(global - last_global < 10) 
-        {
-            cs251::schedulerInstance().yield();
-        }
-        last_global = global;
+        cs251::sleepTimerInstance().sleep(400);
+        printf("join 1 cnt: %d\n", i);
     }
+    
+
     printf("finish thread test join1\n");
 }
 

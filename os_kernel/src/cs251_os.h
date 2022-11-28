@@ -23,7 +23,7 @@ extern "C" void enable_interrupts();
 extern "C" void startFirstTask( uint32_t stk_ptr );
 extern "C" uint32_t global_ptr_read();
 extern "C" void global_ptr_write(uint32_t stk_ptr);
-// extern "C" uint8_t __global_pointer$[];
+
 
 
 namespace cs251
@@ -47,11 +47,13 @@ using cond_id_t = int;
 class ThreadControlBlock;
 class ThreadScheduler;
 class MutexFactory;
+class ConditionVariableFactory;
 
 void stub_wrapper(void (*f)(void*), void* arg, size_t thread_global_ptr);
 void thread_switch(ThreadControlBlock& curr_tcb, ThreadControlBlock& next_tcb);
 inline ThreadScheduler& schedulerInstance();
 inline MutexFactory& mutexFactoryInstance();
+inline ConditionVariableFactory& condFactoryInstance();
 
 
 class ThreadControlBlock
@@ -300,7 +302,7 @@ public:
         return id_tcb_map_.at(running_thread_id_).allowPreemption(); 
     }
 
-
+    
     void exit()
     {
         switchCurrentThreadTo(ThreadState::eFINISHED);
@@ -434,7 +436,8 @@ private:
 class ConditionVariableInternal
 {
 public:
-    ConditionVariableInternal(){}
+    ConditionVariableInternal() = default;
+    ConditionVariableInternal(cond_id_t cond_id): cond_id_(cond_id){}
     void wait(mutex_id_t mtx_id)
     {
         // assert lock is acquired
@@ -455,7 +458,7 @@ public:
             if(waiting_list_.empty()) break;
             // LOGD("%s:%d\n", __FILE__, __LINE__);
             thread_id_t tid = waiting_list_.front();
-            LOGD("thread %d put to ready list by condition variable\n", tid);
+            LOGD("thread %d put to ready list by condition variable %d\n", tid, cond_id_);
             waiting_list_.pop_front();
             schedulerInstance().resume(tid);
         } while (0);
@@ -467,6 +470,7 @@ public:
         while(!waiting_list_.empty()) notifyOne();
     }
 private:
+    cond_id_t cond_id_ = -1;
     ecs::deque<thread_id_t, ecs::allocator_nosys<thread_id_t>> waiting_list_;
 };
 
@@ -476,7 +480,7 @@ public:
     cond_id_t create() 
     {  
         seq_id_++;
-        id_map_[seq_id_] = ConditionVariableInternal();
+        id_map_[seq_id_] = ConditionVariableInternal(seq_id_);
         return seq_id_;
     }
     void destroy(cond_id_t cond_id)
@@ -495,8 +499,48 @@ private:
     ecs::map<cond_id_t, ConditionVariableInternal> id_map_; 
 };
 
+class SleepTimer
+{
+public:
+    SleepTimer()
+    {
+        mtx_for_sleep_ = mutexFactoryInstance().create();
+        cond_for_sleep_ = condFactoryInstance().create();
+    }
+    void sleep(size_t cnt)
+    {
+        size_t wake_tick = systick_ + cnt;
+        mutexFactoryInstance().lock(mtx_for_sleep_);
+        
+        while(systick_ < wake_tick)
+        {
+            condFactoryInstance().wait(cond_for_sleep_, mtx_for_sleep_);
+        }
+        mutexFactoryInstance().unlock(mtx_for_sleep_);
+    }
+
+    void updateTick()
+    { 
+        systick_++; 
+        condFactoryInstance().notifyAll(cond_for_sleep_);
+    }
+
+private:
+    volatile size_t systick_ = 0;
+    mutex_id_t mtx_for_sleep_ = -1;
+    cond_id_t cond_for_sleep_ = -1;
+};
+
 extern void* g_mutex_factory;
 extern void* g_condition_variable_factory;
+extern SleepTimer* g_sleep_timer;
+
+inline SleepTimer& sleepTimerInstance()
+{
+    if(g_sleep_timer == nullptr)
+        g_sleep_timer = new SleepTimer();
+    return *g_sleep_timer;
+}
 
 inline MutexFactory& mutexFactoryInstance()
 {
@@ -599,6 +643,7 @@ inline void ThreadScheduler::join( thread_id_t tid )
 void* g_scheduler_ = nullptr;
 void* g_mutex_factory = nullptr;
 void* g_condition_variable_factory = nullptr;
+SleepTimer* g_sleep_timer = nullptr;
 #endif
 
 } // namespace cs251
