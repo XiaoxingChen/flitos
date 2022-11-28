@@ -5,15 +5,23 @@
 
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
+
+extern volatile mutex_id_t pillarMutex;
+
 uint32_t getTicks(void);
 
 uint32_t getStatus(void);
+
 uint32_t getVideoInterruptSeq(void);
+
 uint32_t getCmdInterruptSeq(void);
+
 void initVideoSetting();
 
+int calculateCollision(int bird_x, int bird_y, int pillarIndex);
 
-struct position{
+
+struct position {
     uint32_t x;
     uint32_t y;
     mutex_id_t mtx;
@@ -25,6 +33,7 @@ struct position{
 uint32_t registerHandler(uint32_t code);
 
 uint32_t myHandler(uint32_t code);
+
 uint32_t myHandler2(uint32_t code);
 
 // extern uint8_t bird_img_0[64*64];
@@ -34,32 +43,32 @@ uint32_t myHandler2(uint32_t code);
 // volatile char *VIDEO_MEMORY = (volatile char *)(0x50000000 + 0xFE800);
 // volatile char *MODE_CONTROL_REG = (volatile char *)(0x50000000 + 0xFF414);
 
-void threadGraphics(void* param);
-void movePillarThread(void* param);
-void gravityThread(void* param);
+void threadGraphics(void *param);
 
-void idleThread(void* param)
-{
+void movePillarThread(void *param);
+
+void gravityThread(void *param);
+
+void collisionThread(void *param);
+
+void idleThread(void *param) {
     int cnt = 0;
-    while (1)
-    {
+    while (1) {
         linePrintf(7, "app idle thread cnt: %d", cnt++);
         // threadYield();
     }
-    
+
 }
 
-void threadCommandButtonMonitor(void* param)
-{
-    while(1)
-    {
+void threadCommandButtonMonitor(void *param) {
+    while (1) {
         int cmdSeq = getCmdInterruptSeq();
         linePrintf(1, "cmd interrupt: %d", cmdSeq);
-        
+
         setDisplayMode(cmdSeq ^ 1);
         threadYield();
     }
-    
+
 }
 
 
@@ -70,8 +79,8 @@ int main() {
     initVideoSetting();
     // fetch bird position struct.
     struct position flappyBird;
-    flappyBird.y=30;
-    flappyBird.x=30;
+    flappyBird.y = 30;
+    flappyBird.x = 30;
     flappyBird.mtx = mutexInit();
     thread_id_t th1 = threadCreate(idleThread, NULL);
     thread_id_t th2 = threadCreate(threadGraphics, &flappyBird);
@@ -81,19 +90,19 @@ int main() {
 
     thread_id_t th5 = threadCreate(movePillarThread, NULL);
 
+    thread_id_t th6 = threadCreate(collisionThread, &flappyBird);
 
 
     // threadJoin(th1);
     // threadJoin(th2);
     // threadJoin(th3);
-    
-    while(1) threadYield();
+
+    while (1) threadYield();
     return 0;
 }
 
-void threadGraphics(void* param)
-{
-    struct position *flappyBird = (struct position* ) param;
+void threadGraphics(void *param) {
+    struct position *flappyBird = (struct position *) param;
     int x_pos = 18;
     int sprite_inc_x;
     int sprite_inc_y;
@@ -104,83 +113,94 @@ void threadGraphics(void* param)
         global = getTicks();
         sprite_inc_x = 0;
         sprite_inc_y = 0;
-        if(global != last_time){
+        if (global != last_time) {
             linePrintf(0, "video interrupt: %d", getVideoInterruptSeq());
             controller_status = getStatus();
-            if(controller_status){
-                // VIDEO_MEMORY[x_pos] = ' ';
-                if(controller_status & 0x1){
+            if (controller_status) {
+                linePrintf(5, "controller status: %d", controller_status);
+                if (controller_status & 0x1) {
                     sprite_inc_x = -move_speed;
-                    if(x_pos & 0x3F){
-                        x_pos--;
-                    }
                 }
-                if(controller_status & 0x2){
+                if (controller_status & 0x2) {
                     sprite_inc_y = -move_speed;
-                    if(x_pos >= 0x40){
-                        x_pos -= 0x40;
-                    }
                 }
-                if(controller_status & 0x4){
+                if (controller_status & 0x4) {
                     sprite_inc_y = move_speed;
-                    if(x_pos < 0x8C0){
-                        x_pos += 0x40;
-                    }
                 }
-                if(controller_status & 0x8){
+                if (controller_status & 0x8) {
                     sprite_inc_x = move_speed;
-                    if((x_pos & 0x3F) != 0x3F){
-                        x_pos++;
-                    }
                 }
-                // setLargeSpriteControl(0, 64, 64, sprite_x, sprite_y, 1);
-                // VIDEO_MEMORY[x_pos] = 'X';
-
-
             }
             mutexLock(flappyBird->mtx);
             flappyBird->x += sprite_inc_x;
-            flappyBird->y +=sprite_inc_y;
+            flappyBird->y += sprite_inc_y;
             mutexUnlock(flappyBird->mtx);
-            for(int i = 0; i < 3; i++)
-            {
+            for (int i = 0; i < 3; i++) {
                 setLargeSpriteControl(i, 64, 64, flappyBird->x, flappyBird->y, i == global % 3);
             }
-            
             last_time = global;
-        } //global != last_time
+        }
         threadYield();
-        // uint32_t g_ptr = getGlobalPointer();
-        // *(uint32_t*)VIDEO_MEMORY = g_ptr;
-    } // while(1)
+
+    }
 }
 
+
 void gravityThread(void *param) {
-    int move_frequency =3;
+    int move_frequency = 3;
     uint32_t last_time = 0;
-    int count111=0;
-    int global2=42;
-    struct position *flappyBird = (struct position*) param;
+    int count111 = 0;
+    int global2 = 42;
+    struct position *flappyBird = (struct position *) param;
     while (1) {
         global2 = getTicks();
-        if(global2 - last_time >=move_frequency){
-            linePrintf(11+count111, "bird y=%d", flappyBird->y);
-            // count111++;
+        if (global2 - last_time >= move_frequency) {
             mutexLock(flappyBird->mtx);
             uint32_t sprite_x = flappyBird->x;
             uint32_t sprite_y = flappyBird->y;
-            sprite_y +=3;
-            flappyBird->y=sprite_y;
+            sprite_y += 3;
+            flappyBird->y = sprite_y;
             mutexUnlock(flappyBird->mtx);
-            for(int i = 0; i < 3; i++)
-            {
+            for (int i = 0; i < 3; i++) {
                 setLargeSpriteControl(i, 64, 64, sprite_x, sprite_y, i == global2 % 3);
             }
-            
-            
-            last_time=global2;
+
+            last_time = global2;
         }
-        
+
         threadYield();
     }
 }
+
+
+void collisionThread(void *param) {
+    // fetch the current position of our flappy bird
+    struct position *littleBird = (struct position *) param;
+    while (1) {
+        // cycling through each pillar to calculate if a collision has occurred.
+        // a. acquire the lock of operating pillars.
+         mutexLock(pillarMutex);
+        mutexLock(littleBird->mtx);
+
+        int bird_x = littleBird->x;
+        int bird_y = littleBird->y;
+
+        // calculate the real position of the bird
+        bird_x = bird_x - 15;
+        bird_y = bird_y - 15;
+
+        for (int j = 0; j < 1; j++) {
+            if (calculateCollision(bird_x, bird_y, j) == 1) {
+                // deal with collision
+                linePrintf(14, "collision has occurred: %d,%d,pillar_index=%d                    ", bird_x, bird_y, j);
+            }else{
+                linePrintf(14, "                                                                ");
+            }
+        }
+        mutexUnlock(littleBird->mtx);
+        mutexUnlock(pillarMutex);
+        //
+        threadYield();
+    }
+}
+

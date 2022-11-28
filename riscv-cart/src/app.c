@@ -10,6 +10,40 @@ extern uint8_t bird_img_1[64 * 64];
 extern uint8_t bird_img_2[64 * 64];
 extern uint8_t bird_background_img[288 * 512];
 
+struct pillarBlock {
+    /**
+     * x and y represent the top-left point of the pillar
+     */
+    int x;
+    int y;
+    /**
+     * height represents the height in unit of pixel
+     */
+    int height;
+
+    int controlIndex;
+};
+struct pillar {
+    /**
+     * x and y represent the top-left point of the pillar
+     */
+    int x;
+    int y;
+    /**
+     * height represents the height in unit of pixel
+     */
+    int height;
+
+    int block_number;
+    /**
+     *
+     */
+    struct pillarBlock blocks[3];
+};
+volatile struct pillar globalPillars[6];
+
+volatile mutex_id_t pillarMutex;
+
 // extern FuncWriteTargetMem writeTargetMem;
 
 void initVideoSetting() {
@@ -46,36 +80,6 @@ void initVideoSetting() {
 
 }
 
-struct pillarBlock {
-    /**
-     * x and y represent the top-left point of the pillar
-     */
-    int x;
-    int y;
-    /**
-     * height represents the height in unit of pixel
-     */
-    int height;
-
-    int controlIndex;
-};
-struct pillar {
-    /**
-     * x and y represent the top-left point of the pillar
-     */
-    int x;
-    int y;
-    /**
-     * height represents the height in unit of pixel
-     */
-    int height;
-
-    int block_number;
-    /**
-     *
-     */
-    struct pillarBlock blocks[3];
-};
 
 int countXPosition(int i, int width) {
     if (i == 0) {
@@ -85,11 +89,10 @@ int countXPosition(int i, int width) {
 }
 
 
-uint8_t pillar_img[64*64];
+uint8_t pillar_img[64 * 64];
 
 int createAPillar(struct pillar *currentPillar, int index_data) {
-    for(int i = 0; i < 64*64; i++)
-    {
+    for (int i = 0; i < 64 * 64; i++) {
         pillar_img[i] = 5;
     }
     for (int i = 0; i < currentPillar->block_number; i++) {
@@ -105,6 +108,7 @@ int createAPillar(struct pillar *currentPillar, int index_data) {
 int movePillar(struct pillar *currentPillar, int offset) {
     for (int i = 0; i < currentPillar->block_number; i++) {
         currentPillar->blocks[i].x = currentPillar->blocks[i].x - offset;
+        currentPillar->x = currentPillar->blocks[i].x;
         if (currentPillar->blocks[i].x < -64) {
             currentPillar->blocks[i].x = 512;
         }
@@ -193,52 +197,11 @@ void createTops(struct pillar *pillars) {
     }
 }
 
-//void movePillarThread(void *param) {
-//
-//    struct pillar topPillar;
-//    struct pillar bottomPillar;
-//    // x position
-//    int x_position = 200;
-//    // bottom
-//    int bottom_height = 110;
-//    //gap
-//    int gap = 0;
-//    // top
-//    int top_height = 210 - bottom_height - gap;
-//    // the index of the large sprites
-//    int index_data = 5;
-//
-//    /**
-//     * step 1: generate pillars
-//     */
-//    createABottom(x_position, bottom_height, &bottomPillar);
-//    createATop(x_position, top_height, &topPillar);
-//
-//    index_data = createAPillar(&bottomPillar,index_data);
-//    index_data = createAPillar(&topPillar,index_data);
-//    linePrintf(14, "bottom 0 control id=%d,top 0 id=%d", bottomPillar.blocks[0].controlIndex,topPillar.blocks[0].controlIndex);
-//
-//    /**
-//     * step 2: move pillars in a dead-loop
-//     */
-//    int movement_offset = 1;
-//    while (1) {
-//        if (topPillar.block_number != 0) {
-//            movePillar(&topPillar, movement_offset);
-//        }
-//        if (bottomPillar.block_number != 0) {
-//            movePillar(&bottomPillar, movement_offset);
-//        }
-//        threadYield();
-//    }
-//}
 
 void movePillarThread(void *param) {
-
     // an array contains 3-pairs of pillars
-    struct pillar pillars[6];
-    createBottoms(pillars);
-    createTops(pillars);
+    createBottoms(globalPillars);
+    createTops(globalPillars);
     // the index of the large sprites
     int index_data = 5;
 
@@ -246,17 +209,48 @@ void movePillarThread(void *param) {
      * step 1: generate pillars
      */
     for (int i = 0; i < 6; i++) {
-        index_data = createAPillar(&pillars[i], index_data);
+        index_data = createAPillar(&globalPillars[i], index_data);
     }
 
     /**
      * step 2: move pillars in a dead-loop
      */
     int movement_offset = 2;
+    pillarMutex = mutexInit();
     while (1) {
+        mutexLock(pillarMutex);
         for (int j = 0; j < 6; j++) {
-            movePillar(&pillars[j], movement_offset);
+            movePillar(&globalPillars[j], movement_offset);
         }
+        mutexUnlock(pillarMutex);
         threadYield();
     }
+}
+
+int calculateCollision(int bird_x, int bird_y, int pillarIndex) {
+    struct pillar currentPillar = globalPillars[pillarIndex];
+    linePrintf(15, "current pillar x=%d,y=%d,height=%d                 ",currentPillar.x,currentPillar.y,currentPillar.height);
+
+    int bird_x2 = bird_x+34;
+    int bird_y2 = bird_y+34;
+
+    // if the bird's position has beyond the screen
+    if( bird_x< 0 || bird_x2 >512 || bird_y <0 || bird_y2>288){
+        linePrintf(12, "bird_collision has occurred: %d,%d                 ", bird_x, bird_y);
+        return 1;
+    }else{
+        linePrintf(12, "                                                              ");
+    }
+
+    int pillar_x2 = currentPillar.x+64;
+    int pillar_y2 = currentPillar.y+currentPillar.height;
+    linePrintf(12, "B: x1=%d,x2=%d,y1=%d,y2=%d;P:x1=%d,x2=%d,y1=%d,y2=%d                       ",
+               bird_x,bird_x2,bird_y,bird_y2,
+        currentPillar.x,pillar_x2,currentPillar.y,pillar_y2);
+    // 横相交 并且竖相交
+    if(bird_x2 >= currentPillar.x && bird_x <= pillar_x2 && bird_y2 >= currentPillar.y && bird_y <= pillar_y2){
+        return 1;
+    }
+
+    return 0;
 }
