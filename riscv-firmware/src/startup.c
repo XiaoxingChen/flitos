@@ -163,7 +163,7 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
         cs251::schedulerInstance().inInterruptYield();
     }else if(call == 12)
     {
-        ret = (uint32_t)__global_pointer$;
+        asm volatile ("mv %0, gp" : "=r"(ret));
     }else if(call == 13)
     {
         ret = (uint32_t)cs251::mutexFactoryInstance().create();

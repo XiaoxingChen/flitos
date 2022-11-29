@@ -39,10 +39,10 @@ void threadSpriteMotion(void* param)
     uint32_t x_pos = 100;
     while(1)
     {
-        x_pos += 1;
+        x_pos += 10;
         if(x_pos > 450) x_pos = 50;
         setLargeSpriteControl(0, 64, 64, x_pos, 30, 1);
-        // threadSleep(200);
+        threadSleep(10);
         // threadYield();
     }
 }
