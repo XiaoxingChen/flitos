@@ -27,3 +27,19 @@ void threadYield()
     wrThreadYield();
 }
 #endif
+
+#if 1
+void threadJoin(int tid)
+{
+    typedef void (*FuncKernelJoin)(int);
+    FuncKernelJoin kjoin = (FuncKernelJoin)hookFunction(4);
+    kjoin(tid);
+}
+#endif
+
+void threadSleep(uint32_t ms)
+{
+    typedef void (*FuncKernelSleep)(uint32_t);
+    FuncKernelSleep ksleep = (FuncKernelSleep)hookFunction(5);
+    ksleep(ms);
+}

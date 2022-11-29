@@ -42,14 +42,15 @@ void threadSpriteMotion(void* param)
         x_pos += 1;
         if(x_pos > 450) x_pos = 50;
         setLargeSpriteControl(0, 64, 64, x_pos, 30, 1);
-        threadYield();
+        // threadSleep(200);
+        // threadYield();
     }
 }
 
 int main(int argc, char const *argv[])
 {
     initVideoSetting();
-    threadCreate(threadSpriteMotion, NULL);
-    while(1) threadYield();
+    thread_id_t th_motion = threadCreate(threadSpriteMotion, NULL);
+    threadJoin(th_motion);
     return 0;
 }

@@ -112,7 +112,8 @@ void threadPipeWrite(void* param)
     ecs::string msg("hello baby\n");
     while(1)
     {
-        cs251::sleepTimerInstance().sleep(400);
+        // cs251::sleepTimerInstance().sleep(400);
+        threadSleep(400);
         cs251::pipeFactoryInstance().write(pipe_id, (uint8_t*)msg.c_str(), msg.size());
     }
 }

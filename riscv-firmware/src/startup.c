@@ -87,11 +87,13 @@ void c_interrupt_handler(uint32_t mcause) {
     increaseNestCriticalCount();
 
     int flag = handle_time_interrupt(mcause);
-    global++;
+    
     controller_status = CONTROLLER;
 
     if(flag){
+        global++;
         increaseTimeCompare(100);
+        cs251::sleepTimerInstance().updateTick();
     }
     // increase_timer();
     
@@ -180,6 +182,9 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
     }else if(call == 17)
     {
         cs251::schedulerInstance().join(a0);
+    }else if (call == 18)
+    {
+        cs251::sleepTimerInstance().sleep(a0);
     }
 
     decreaseNestCriticalCount();
