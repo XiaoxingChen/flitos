@@ -189,7 +189,7 @@ void collisionThread(void *param) {
         bird_x = bird_x - 15;
         bird_y = bird_y - 15;
 
-        for (int j = 0; j < 1; j++) {
+        for (int j = 0; j < 6; j++) {
             if (calculateCollision(bird_x, bird_y, j) == 1) {
                 // deal with collision
                 linePrintf(14, "collision has occurred: %d,%d,pillar_index=%d                    ", bird_x, bird_y, j);
