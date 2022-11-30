@@ -9,6 +9,15 @@ extern uint8_t bird_img_0[64 * 64];
 extern uint8_t bird_img_1[64 * 64];
 extern uint8_t bird_img_2[64 * 64];
 extern uint8_t bird_background_img[288 * 512];
+extern uint8_t bird_img_0[64 * 64];
+extern uint8_t bird_img_1[64 * 64];
+extern uint8_t bird_img_2[64 * 64];
+
+extern uint8_t pillar_palette[4*135];
+extern uint8_t pillar_img_head_up[64*64];
+extern uint8_t pillar_img_head_down[64*64];
+extern uint8_t pillar_img_body[64*64];
+
 
 struct pillarBlock {
     /**
@@ -89,15 +98,22 @@ int countXPosition(int i, int width) {
 }
 
 
-uint8_t pillar_img[64 * 64];
-
-int createAPillar(struct pillar *currentPillar, int index_data) {
-    for (int i = 0; i < 64 * 64; i++) {
-        pillar_img[i] = 5;
-    }
+int createAPillar(struct pillar *currentPillar, int index_data, int is_up) {
+    initSpritePalette(2, pillar_palette, 4 * 135);
     for (int i = 0; i < currentPillar->block_number; i++) {
-        setLargeSpriteControl(index_data, 64, 64, currentPillar->blocks[i].x, currentPillar->blocks[i].y, 1);
-        setLargeSpriteDataImage(index_data, pillar_img);
+        setLargeSpriteControl(index_data, 64, 64, currentPillar->blocks[i].x, currentPillar->blocks[i].y, 2);
+        if(is_up && i == 0)
+        {
+            setLargeSpriteDataImage(index_data, pillar_img_head_up);
+        }else if(!is_up && i == currentPillar->block_number - 1)
+        {
+            setLargeSpriteDataImage(index_data, pillar_img_head_down);
+        }else
+        {
+            setLargeSpriteDataImage(index_data, pillar_img_body);
+        }
+        
+        
         currentPillar->blocks[i].controlIndex = index_data;
         index_data++;
     }
@@ -113,7 +129,7 @@ int movePillar(struct pillar *currentPillar, int offset) {
             currentPillar->blocks[i].x = 512;
         }
         setLargeSpriteControl(currentPillar->blocks[i].controlIndex, 64, 64, currentPillar->blocks[i].x,
-                              currentPillar->blocks[i].y, 1);
+                              currentPillar->blocks[i].y, 2);
     }
     return 0;
 }
@@ -209,7 +225,7 @@ void movePillarThread(void *param) {
      * step 1: generate pillars
      */
     for (int i = 0; i < 6; i++) {
-        index_data = createAPillar(&globalPillars[i], index_data);
+        index_data = createAPillar(&globalPillars[i], index_data, i < 3);
     }
 
     /**
