@@ -91,6 +91,12 @@ def generateFullImageData():
     pillar_down_body = colorMap(raw_img[100:100+32, 152:152+26, :], color_idx)
     pillar_down_body = fitToLargeSprite(doubleImage(pillar_down_body))
 
+    gameover_01 = colorMap(raw_img[173:173+21, 152:152+64, :], color_idx)
+    gameover_01 = fitToLargeSprite(gameover_01)
+
+    gameover_02 = colorMap(raw_img[173:173+21, 152+64:248, :], color_idx)
+    gameover_02 = fitToLargeSprite(gameover_02)
+
     with open(output_file, 'w') as f:
         f.write('#include <stdint.h>\n\n')
         f.write(generateCArray(output_palette, 'bird_color_palette') )
@@ -103,6 +109,9 @@ def generateFullImageData():
         f.write(generateCArray(pillar_up_body, 'pillar_img_body_up') )
         f.write(generateCArray(pillar_down_head, 'pillar_img_head_down') )
         f.write(generateCArray(pillar_down_body, 'pillar_img_body_down') )
+
+        f.write(generateCArray(gameover_01, 'gameover_img_01') )
+        f.write(generateCArray(gameover_02, 'gameover_img_02') )
         
     
     # print(len(palette))

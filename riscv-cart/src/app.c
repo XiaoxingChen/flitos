@@ -16,6 +16,9 @@ extern uint8_t pillar_img_head_down[64*64];
 extern uint8_t pillar_img_body_up[64*64];
 extern uint8_t pillar_img_body_down[64*64];
 
+extern uint8_t gameover_img_01[4096];
+extern uint8_t gameover_img_02[4096];
+
 struct pillarBlock {
     /**
      * x and y represent the top-left point of the pillar
