@@ -40,7 +40,7 @@ TARGET_OBJS =   $(OBJ_DIR)/main.o               \
 				$(OBJ_DIR)/app.o               \
 				$(OBJ_DIR)/workarounds.o               \
 				$(OBJ_DIR)/printf.o               \
-				$(OBJ_DIR)/img_data.o               \
+				$(OBJ_DIR)/img_data_gen.o               \
 				$(OBJ_DIR)/video_api.o               \
 				$(OBJ_DIR)/thread_api.o               \
                 $(OBJ_DIR)/startup.o
@@ -61,6 +61,9 @@ $(OBJ_DIR)/app.o: $(SRC_DIR)/app.c
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)/img_data.o: $(SRC_DIR)/img_data.c
+	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
+
+$(OBJ_DIR)/img_data_gen.o: $(SRC_DIR)/img_data_gen.c
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR)/crt0.o: $(BASELINE_INC_DIR)/crt0.s

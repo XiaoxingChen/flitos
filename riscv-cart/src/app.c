@@ -3,21 +3,18 @@
 #include "thread_api.h"
 
 
-extern uint8_t bird_color_palette[4 * 8];
-extern uint8_t bird_background_color_palette[4 * 16];
+extern uint8_t bird_color_palette[888];
+// extern uint8_t bird_background_color_palette[4 * 16];
 extern uint8_t bird_img_0[64 * 64];
 extern uint8_t bird_img_1[64 * 64];
 extern uint8_t bird_img_2[64 * 64];
 extern uint8_t bird_background_img[288 * 512];
-extern uint8_t bird_img_0[64 * 64];
-extern uint8_t bird_img_1[64 * 64];
-extern uint8_t bird_img_2[64 * 64];
 
 extern uint8_t pillar_palette[4*135];
 extern uint8_t pillar_img_head_up[64*64];
 extern uint8_t pillar_img_head_down[64*64];
-extern uint8_t pillar_img_body[64*64];
-
+extern uint8_t pillar_img_body_up[64*64];
+extern uint8_t pillar_img_body_down[64*64];
 
 struct pillarBlock {
     /**
@@ -57,9 +54,9 @@ volatile mutex_id_t pillarMutex;
 
 void initVideoSetting() {
     setDisplayMode(DISPLAY_MODE_GRAPHICS);
-    initBackgroundPalette(0, bird_background_color_palette, 4 * 16);
+    initBackgroundPalette(0, bird_color_palette, 888);
     // initPaletteBirdBackground(BACKGROUND_PALETTE_0);
-    initSpritePalette(1, bird_color_palette, 4 * 8);
+    initSpritePalette(1, bird_color_palette, 888);
     initTransparentSpritePalette(0);
 
     setBackgroundControl(0, 0, 0, 0, 0);
@@ -97,22 +94,23 @@ int countXPosition(int i, int width) {
     return 100 + (64 + 100) * i;
 }
 
+uint8_t pillar_img_single[64*64];
 
 int createAPillar(struct pillar *currentPillar, int index_data, int is_up) {
-    initSpritePalette(2, pillar_palette, 4 * 135);
+    for(int i = 0; i < 64*64; i++) pillar_img_single[i] = 10;
     for (int i = 0; i < currentPillar->block_number; i++) {
-        setLargeSpriteControl(index_data, 64, 64, currentPillar->blocks[i].x, currentPillar->blocks[i].y, 2);
-        if(is_up && i == 0)
+        setLargeSpriteControl(index_data, 64, 64, currentPillar->blocks[i].x, currentPillar->blocks[i].y, 1);
+        #if 1
+        if(is_up)
         {
-            setLargeSpriteDataImage(index_data, pillar_img_head_up);
-        }else if(!is_up && i == currentPillar->block_number - 1)
-        {
-            setLargeSpriteDataImage(index_data, pillar_img_head_down);
+            setLargeSpriteDataImage(index_data, i == 0 ? pillar_img_head_up : pillar_img_body_up);
         }else
         {
-            setLargeSpriteDataImage(index_data, pillar_img_body);
+            setLargeSpriteDataImage(index_data, i == currentPillar->block_number-  1 ? pillar_img_head_down : pillar_img_body_down);
         }
-        
+        #else
+            setLargeSpriteDataImage(index_data, pillar_img_single);
+        #endif
         
         currentPillar->blocks[i].controlIndex = index_data;
         index_data++;
@@ -129,7 +127,7 @@ int movePillar(struct pillar *currentPillar, int offset) {
             currentPillar->blocks[i].x = 512;
         }
         setLargeSpriteControl(currentPillar->blocks[i].controlIndex, 64, 64, currentPillar->blocks[i].x,
-                              currentPillar->blocks[i].y, 2);
+                              currentPillar->blocks[i].y, 1);
     }
     return 0;
 }
