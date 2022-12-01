@@ -97,6 +97,16 @@ def generateFullImageData():
     gameover_02 = colorMap(raw_img[173:173+21, 152+64:248, :], color_idx)
     gameover_02 = fitToLargeSprite(gameover_02)
 
+    digit_imgs = []
+    digit_img_size = (18,12)
+    digit_pos = [(98,254), (80,238), (148,325), (148,339), (148,353), (148,367),(172,325), (172,325), (172,339), (172,353), (172,367)]
+    
+    for i in range(10):
+        h0 = digit_pos[i][0]
+        w0 = digit_pos[i][1]
+        tmp = colorMap(raw_img[h0:h0+digit_img_size[0], w0:w0+digit_img_size[1], :], color_idx)
+        digit_imgs.append(fitToLargeSprite(doubleImage(tmp)))
+
     with open(output_file, 'w') as f:
         f.write('#include <stdint.h>\n\n')
         f.write(generateCArray(output_palette, 'bird_color_palette') )
@@ -112,6 +122,9 @@ def generateFullImageData():
 
         f.write(generateCArray(gameover_01, 'gameover_img_01') )
         f.write(generateCArray(gameover_02, 'gameover_img_02') )
+
+        for i in range(10):
+            f.write(generateCArray(digit_imgs[i], 'digit_img_' + str(i)))
         
     
     # print(len(palette))
