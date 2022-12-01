@@ -176,29 +176,36 @@ void gravityThread(void *param) {
 void collisionThread(void *param) {
     // fetch the current position of our flappy bird
     struct position *littleBird = (struct position *) param;
+    uint32_t last_time = 0;
     while (1) {
-        // cycling through each pillar to calculate if a collision has occurred.
-        // a. acquire the lock of operating pillars.
-         mutexLock(pillarMutex);
-        mutexLock(littleBird->mtx);
+        global = getTicks();
+        if (global != last_time) {
+            // cycling through each pillar to calculate if a collision has occurred.
+            // a. acquire the lock of operating pillars.
+//         mutexLock(pillarMutex);
+//        mutexLock(littleBird->mtx);
 
-        int bird_x = littleBird->x;
-        int bird_y = littleBird->y;
+            int bird_x = littleBird->x;
+            int bird_y = littleBird->y;
 
-        // calculate the real position of the bird
-        bird_x = bird_x - 15;
-        bird_y = bird_y - 15;
+            // calculate the real position of the bird
+            bird_x = bird_x - 15;
+            bird_y = bird_y - 15;
 
-        for (int j = 0; j < 6; j++) {
-            if (calculateCollision(bird_x, bird_y, j) == 1) {
-                // deal with collision
-                linePrintf(14, "collision has occurred: %d,%d,pillar_index=%d                    ", bird_x, bird_y, j);
-            }else{
-                linePrintf(14, "                                                                ");
+            for (int j = 0; j < 6; j++) {
+                if (calculateCollision(bird_x, bird_y, j) == 1) {
+                    // deal with collision
+                    // linePrintf(14, "collision has occurred: %d,%d,pillar_index=%d                    ", bird_x, bird_y, j);
+                } else {
+                    //linePrintf(14, "                                                                ");
+                }
             }
+//        mutexUnlock(littleBird->mtx);
+//        mutexUnlock(pillarMutex);
+
+            last_time = global;
         }
-        mutexUnlock(littleBird->mtx);
-        mutexUnlock(pillarMutex);
+
         //
         threadYield();
     }
