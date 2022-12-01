@@ -191,10 +191,6 @@ void collisionThread(void *param) {
             int bird_x = littleBird->x;
             int bird_y = littleBird->y;
 
-            // calculate the real position of the bird
-            bird_x = bird_x - 15;
-            bird_y = bird_y - 15;
-
             for (int j = 0; j < 6; j++) {
                 if (calculateCollision(bird_x, bird_y, j) == 1) {
                     // deal with collision

@@ -246,9 +246,12 @@ void movePillarThread(void *param) {
 int calculateCollision(int bird_x, int bird_y, int pillarIndex) {
     struct pillar currentPillar = globalPillars[pillarIndex];
    // linePrintf(15, "current pillar x=%d,y=%d,height=%d                 ",currentPillar.x,currentPillar.y,currentPillar.height);
+   int bird_real_height = 24;
+   int bird_real_width = 34;
+   int pillar_real_width = 34;
 
-    int bird_x2 = bird_x+30;
-    int bird_y2 = bird_y+30;
+    int bird_x2 = bird_x + bird_real_width;
+    int bird_y2 = bird_y + bird_real_height;
 
     // if the bird's position has beyond the screen
     if( bird_x< 0 || bird_x2 >512 || bird_y <0 || bird_y2>288){
@@ -258,7 +261,7 @@ int calculateCollision(int bird_x, int bird_y, int pillarIndex) {
        // linePrintf(12, "                                                              ");
     }
 
-    int pillar_x2 = currentPillar.x+64;
+    int pillar_x2 = currentPillar.x + pillar_real_width;
     int pillar_y2 = currentPillar.y+currentPillar.height;
 //    linePrintf(12, "B: x1=%d,x2=%d,y1=%d,y2=%d;P:x1=%d,x2=%d,y1=%d,y2=%d                       ",
 //               bird_x,bird_x2,bird_y,bird_y2,
