@@ -85,7 +85,7 @@ def generateFullImageData():
     pillar_up_body = colorMap(raw_img[20:20+32, 180:180+26, :], color_idx)
     pillar_up_body = fitToLargeSprite(doubleImage(pillar_up_body))
 
-    pillar_down_head = colorMap(raw_img[138:138+32, 152:152+26, :], color_idx)
+    pillar_down_head = colorMap(raw_img[163-32:163, 152:152+26, :], color_idx)
     pillar_down_head = fitToLargeSprite(doubleImage(pillar_down_head))
 
     pillar_down_body = colorMap(raw_img[100:100+32, 152:152+26, :], color_idx)
