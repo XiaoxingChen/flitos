@@ -247,8 +247,8 @@ int calculateCollision(int bird_x, int bird_y, int pillarIndex) {
     struct pillar currentPillar = globalPillars[pillarIndex];
    // linePrintf(15, "current pillar x=%d,y=%d,height=%d                 ",currentPillar.x,currentPillar.y,currentPillar.height);
 
-    int bird_x2 = bird_x+22;
-    int bird_y2 = bird_y+22;
+    int bird_x2 = bird_x+30;
+    int bird_y2 = bird_y+30;
 
     // if the bird's position has beyond the screen
     if( bird_x< 0 || bird_x2 >512 || bird_y <0 || bird_y2>288){
