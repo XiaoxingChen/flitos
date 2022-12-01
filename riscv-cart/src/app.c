@@ -248,7 +248,7 @@ int calculateCollision(int bird_x, int bird_y, int pillarIndex) {
    // linePrintf(15, "current pillar x=%d,y=%d,height=%d                 ",currentPillar.x,currentPillar.y,currentPillar.height);
    int bird_real_height = 24;
    int bird_real_width = 34;
-   int pillar_real_width = 34;
+   int pillar_real_width = 52;
 
     int bird_x2 = bird_x + bird_real_width;
     int bird_y2 = bird_y + bird_real_height;
