@@ -19,6 +19,8 @@ extern uint8_t pillar_img_body_down[64*64];
 extern uint8_t gameover_img_01[4096];
 extern uint8_t gameover_img_02[4096];
 
+extern volatile uint32_t running_flag;
+
 struct pillarBlock {
     /**
      * x and y represent the top-left point of the pillar
@@ -233,7 +235,7 @@ void movePillarThread(void *param) {
      * step 2: move pillars in a dead-loop
      */
     int movement_offset = 2;
-    while (1) {
+    while (running_flag) {
         for (int j = 0; j < 6; j++) {
             movePillar(&globalPillars[j], movement_offset);
         }
@@ -245,8 +247,8 @@ int calculateCollision(int bird_x, int bird_y, int pillarIndex) {
     struct pillar currentPillar = globalPillars[pillarIndex];
    // linePrintf(15, "current pillar x=%d,y=%d,height=%d                 ",currentPillar.x,currentPillar.y,currentPillar.height);
 
-    int bird_x2 = bird_x+34;
-    int bird_y2 = bird_y+34;
+    int bird_x2 = bird_x+22;
+    int bird_y2 = bird_y+22;
 
     // if the bird's position has beyond the screen
     if( bird_x< 0 || bird_x2 >512 || bird_y <0 || bird_y2>288){
@@ -267,4 +269,12 @@ int calculateCollision(int bird_x, int bird_y, int pillarIndex) {
     }
 
     return 0;
+}
+
+void showGamerOverSprite(){
+    setLargeSpriteControl(62, 64, 64, 192, 112, 1);
+    setLargeSpriteControl(63, 64, 64, 256, 112, 1);
+
+    setLargeSpriteDataImage(62,gameover_img_01);
+    setLargeSpriteDataImage(63,gameover_img_02);
 }

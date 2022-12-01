@@ -6,6 +6,8 @@
 volatile int global = 42;
 volatile uint32_t controller_status = 0;
 
+volatile uint32_t  running_flag=1;
+
 extern volatile mutex_id_t pillarMutex;
 
 uint32_t getTicks(void);
@@ -19,6 +21,7 @@ uint32_t getCmdInterruptSeq(void);
 void initVideoSetting();
 
 int calculateCollision(int bird_x, int bird_y, int pillarIndex);
+void showGamerOverSprite();
 
 
 struct position {
@@ -109,7 +112,7 @@ void threadGraphics(void *param) {
     int move_speed = 5;
     uint32_t time_counter = 0;
     uint32_t last_time = 0;
-    while (1) {
+    while (running_flag) {
         global = getTicks();
         sprite_inc_x = 0;
         sprite_inc_y = 0;
@@ -152,7 +155,7 @@ void gravityThread(void *param) {
     int count111 = 0;
     int global2 = 42;
     struct position *flappyBird = (struct position *) param;
-    while (1) {
+    while (running_flag) {
         global2 = getTicks();
         if (global2 - last_time >= move_frequency) {
             mutexLock(flappyBird->mtx);
@@ -177,7 +180,7 @@ void collisionThread(void *param) {
     // fetch the current position of our flappy bird
     struct position *littleBird = (struct position *) param;
     uint32_t last_time = 0;
-    while (1) {
+    while (running_flag) {
         global = getTicks();
         if (global != last_time) {
             // cycling through each pillar to calculate if a collision has occurred.
@@ -195,6 +198,9 @@ void collisionThread(void *param) {
             for (int j = 0; j < 6; j++) {
                 if (calculateCollision(bird_x, bird_y, j) == 1) {
                     // deal with collision
+                    running_flag = 0;
+                    // show up the "game over" sprites.
+                     showGamerOverSprite();
                     // linePrintf(14, "collision has occurred: %d,%d,pillar_index=%d                    ", bird_x, bird_y, j);
                 } else {
                     //linePrintf(14, "                                                                ");
