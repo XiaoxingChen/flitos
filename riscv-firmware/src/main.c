@@ -22,7 +22,7 @@ void idleThread(void* param)
     while(1)
     {
         // VIDEO_MEMORY[0x40 * 6] = '0' + cnt++ % 10;
-        line_printf(6, "firmware cnt: %d", cnt++);
+        line_printf(6, "ECS251 Group 1, OS version: 1.2.1;  cnt: %d", cnt++);
         cs251::thread_yield();
     }
 }

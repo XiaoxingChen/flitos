@@ -12,12 +12,26 @@ void setLargeSpriteControl(uint32_t idx, uint32_t h, uint32_t w, uint32_t x, uin
 {
     uint32_t larget_sprite_handle_offset = 0xFF114;
     uint32_t handle = larget_sprite_handle_offset + idx * 4;
-    h = (h - 33) & 0x1F;
-    w = (w - 33) & 0x1F;
-    y = (y + 64) & 0x1FF;
-    x = (x + 64) & 0x3FF;
-    palette = palette & 0x3;
+    h = (h - 33) & 0x1F; // 5-bit
+    w = (w - 33) & 0x1F; // 5-bit
+    y = (y + 64) & 0x1FF; // 9-bit
+    x = (x + 64) & 0x3FF; // 10-bit
+    palette = palette & 0x3; // 2-bit
     uint32_t value = (h << 26) + (w << 21) + (y << 12) + (x << 2) + palette;
+    writeTarget(handle, value);
+}
+
+void setSmallSpriteControl(uint32_t idx, uint32_t z, uint32_t h, uint32_t w, uint32_t x, uint16_t y, uint32_t palette)
+{
+    uint32_t small_sprite_handle_offset = 0xFF214;
+    uint32_t handle = small_sprite_handle_offset + idx * 4;
+    z = (z - 0) & 0x07; // 3-bit
+    h = (h - 1) & 0x0F; // 4-bit
+    w = (w - 1) & 0x0F; // 4-bit
+    y = (y + 16) & 0x1FF;// 9-bit
+    x = (x + 16) & 0x3FF;// 10-bit
+    palette = palette & 0x3; // 2-bit
+    uint32_t value = (z << 29) + (h << 25) + (w << 21) + (y << 12) + (x << 2) + palette;
     writeTarget(handle, value);
 }
 
@@ -73,6 +87,11 @@ int setBackgroundDataImage(uint32_t idx, uint8_t * addr)
 int setLargeSpriteDataImage(uint32_t idx, uint8_t * addr)
 {
     return writeIndexedTarget(0xB4000, 0x1000, idx, addr, 64*64);
+}
+
+int setSmallSpriteDataImage(uint32_t idx, uint8_t * addr)
+{
+    return writeIndexedTarget(0xF4000, 0x100, idx, addr, 16*16);
 }
 
 void setDisplayMode(uint32_t mode)
