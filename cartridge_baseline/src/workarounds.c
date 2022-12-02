@@ -27,3 +27,35 @@ void threadYield()
     wrThreadYield();
 }
 #endif
+
+#if 1
+void threadJoin(int tid)
+{
+    uint32_t cartridge_global_pointer;
+    uint32_t firmware_global_pointer;
+    firmware_global_pointer = getGlobalPointer();
+    asm volatile ("mv %0, gp" : "=r"(cartridge_global_pointer));
+
+    typedef void (*FuncKernelJoin)(int);
+    FuncKernelJoin kjoin = (FuncKernelJoin)hookFunction(4);
+
+    asm volatile ("mv gp, %0" : : "r"(firmware_global_pointer));
+    kjoin(tid);
+    asm volatile ("mv gp, %0" : : "r"(cartridge_global_pointer));
+}
+#endif
+
+void threadSleep(uint32_t ms)
+{
+    uint32_t cartridge_global_pointer;
+    uint32_t firmware_global_pointer;
+    firmware_global_pointer = getGlobalPointer();
+    asm volatile ("mv %0, gp" : "=r"(cartridge_global_pointer));
+
+    typedef void (*FuncKernelSleep)(uint32_t);
+    FuncKernelSleep ksleep = (FuncKernelSleep)hookFunction(5);
+
+    asm volatile ("mv gp, %0" : : "r"(firmware_global_pointer));
+    ksleep(ms);
+    asm volatile ("mv gp, %0" : : "r"(cartridge_global_pointer));
+}

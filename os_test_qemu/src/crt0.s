@@ -18,7 +18,7 @@ _start:
 
 .section .text, "ax"
 .global mutexInit, mutexDestroy
-.global threadCreate, threadYield, threadJoin
+.global threadCreate, threadYield, threadJoin, threadSleep
   
 threadCreate:
     li a5, 10
@@ -43,5 +43,8 @@ mutexRelease:
     ecall
 threadJoin:
     li a5, 17
+    ecall
+threadSleep:
+    li a5, 18
     ecall
 .end

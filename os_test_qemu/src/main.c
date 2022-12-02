@@ -112,7 +112,8 @@ void threadPipeWrite(void* param)
     ecs::string msg("hello baby\n");
     while(1)
     {
-        cs251::sleepTimerInstance().sleep(400);
+        // cs251::sleepTimerInstance().sleep(400);
+        threadSleep(400);
         cs251::pipeFactoryInstance().write(pipe_id, (uint8_t*)msg.c_str(), msg.size());
     }
 }
@@ -148,7 +149,8 @@ void threadTestJoin1(void*)
     
     for(int i = 0; i < 50; i++)
     {
-        cs251::sleepTimerInstance().sleep(400);
+        // cs251::sleepTimerInstance().sleep(400);
+        threadSleep(400);
         printf("join 1 cnt: %d\n", i);
     }
     
@@ -159,7 +161,8 @@ void threadTestJoin1(void*)
 void threadTestJoin2(void*)
 {
     auto th_join_1 = cs251::schedulerInstance().create(threadTestJoin1, nullptr);
-    cs251::schedulerInstance().join(th_join_1);
+    // cs251::schedulerInstance().join(th_join_1);
+    threadJoin(th_join_1);
     printf("finish thread test join2\n");
 }
 

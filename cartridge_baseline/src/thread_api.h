@@ -16,6 +16,7 @@ mutex_id_t mutexInit();
 void mutexDestroy(mutex_id_t mtx_id);
 void mutexLock(mutex_id_t mtx_id);
 void mutexUnlock(mutex_id_t mtx_id);
+void threadSleep(uint32_t ms);
 
 #ifdef __cplusplus
 }

@@ -32,6 +32,16 @@ uint32_t writeTarget(uint32_t mem_handle, uint32_t value)
     return 0;
 }
 
+void ksleep(uint32_t ms)
+{
+    cs251::sleepTimerInstance().sleep(ms);
+}
+
+void kjoin(uint32_t tid)
+{
+    cs251::schedulerInstance().join(tid);
+}
+
 uint32_t hookFunctionPointer(uint32_t fun_id)
 {
     if(1 == fun_id)
@@ -43,6 +53,12 @@ uint32_t hookFunctionPointer(uint32_t fun_id)
     }else if(3 == fun_id)
     {
         return (uint32_t)&cs251::thread_yield;
+    }else if(4 == fun_id)
+    {
+        return (uint32_t)&kjoin;
+    }else if(5 == fun_id)
+    {
+        return (uint32_t)&ksleep;
     }
     return 0;
 }
