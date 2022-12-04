@@ -3,6 +3,7 @@
 #include <string.h>
 #define CS251_OS_STATIC_OBJECTS_ON
 #include "cs251_os.h"
+#include "cs251_pipe.h"
 #include "utils.h"
 
 

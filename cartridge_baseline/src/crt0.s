@@ -20,6 +20,9 @@ _start:
 .global writeTargetMem, writeTarget
 .global mutexInit, mutexDestroy, mutexLock, mutexUnlock
 .global threadCreateRaw, threadYield /*, threadJoin, threadSleep*/
+.global condInit, condDestroy, condBroadcast, condSignal, condWait
+.global pipeOpen, pipeClose, pipeRead, pipeWrite
+.global malloc, free
 
 getTicks:
     li a5, 0
@@ -72,4 +75,37 @@ mutexUnlock:
 threadSleep:
     li a5, 18
     ecall*/
+condInit:
+    li a5, 19
+    ecall
+condDestroy:
+    li a5, 20
+    ecall
+condSignal:
+    li a5, 21
+    ecall
+condBroadcast:
+    li a5, 22
+    ecall
+condWait:
+    li a5, 23
+    ecall
+pipeOpen:
+    li a5, 24
+    ecall
+pipeClose:
+    li a5, 25
+    ecall
+pipeRead:
+    li a5, 26
+    ecall
+pipeWrite:
+    li a5, 27
+    ecall
+malloc:
+    li a5, 28
+    ecall
+free:
+    li a5, 29
+    ecall
 .end

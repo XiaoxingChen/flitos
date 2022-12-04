@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include "include/timer.h"
+#define ALLOCATOR_IMPLEMENTATION
 #include "cs251_os.h"
+#include "ecs_allocator.h"
 #include "utils.h"
 
 extern uint8_t _erodata[];
@@ -173,11 +175,11 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
     }
     else if(call == 15)
     {
-        // not tested
+        // by passed
         cs251::mutexFactoryInstance().lock(a0);
     }else if(call == 16)
     {
-        // not tested
+        // by passed
         cs251::mutexFactoryInstance().unlock(a0);
     }else if(call == 17)
     {
@@ -185,6 +187,56 @@ uint32_t c_system_call(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint3
     }else if (call == 18)
     {
         cs251::sleepTimerInstance().sleep(a0);
+    }else if(call == 19)
+    {
+        // test required
+        ret = cs251::condFactoryInstance().create();
+    }else if(call == 20)
+    {
+        // test required
+        cs251::condFactoryInstance().destroy(a0);
+    }else if(call == 21)
+    {
+        // test required
+        cs251::condFactoryInstance().notifyOne(a0);
+    }else if(call == 22)
+    {
+        // test required
+        cs251::condFactoryInstance().notifyAll(a0);
+    }else if(call == 23)
+    {
+        // test required
+        cs251::condFactoryInstance().wait(a0, a1);
+    }else if(call == 24)
+    {
+        // test required
+        ret = cs251::pipeFactoryInstance().open();
+    }else if(call == 25)
+    {
+        // test required
+        cs251::pipeFactoryInstance().close(a0);
+    }else if(call == 26)
+    {
+        // test required
+        ret = cs251::pipeFactoryInstance().read(a0, (uint8_t*)a1, a2);
+    }else if(call == 27)
+    {
+        // test required
+        cs251::pipeFactoryInstance().write(a0, (uint8_t*)a1, a2);
+    }else if(call == 28)
+    {
+        // test required
+        cs251::mutex_id_t mtx = ecs::allocatorMutexInstance();
+        cs251::mutexFactoryInstance().lock(mtx);
+        ret = (uint32_t)malloc(a0);
+        cs251::mutexFactoryInstance().unlock(mtx);
+    }else if(call == 29)
+    {
+        // test required
+        cs251::mutex_id_t mtx = ecs::allocatorMutexInstance();
+        cs251::mutexFactoryInstance().lock(mtx);
+        free((void*)a0);
+        cs251::mutexFactoryInstance().unlock(mtx);
     }
 
     decreaseNestCriticalCount();
