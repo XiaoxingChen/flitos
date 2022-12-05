@@ -2,6 +2,7 @@
 #include "include/timer.h"
 #define ALLOCATOR_IMPLEMENTATION
 #include "cs251_os.h"
+#include "cs251_pipe.h"
 #include "ecs_allocator.h"
 #include "utils.h"
 
