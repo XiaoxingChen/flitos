@@ -63,6 +63,8 @@ See the original [document](https://github.com/UCDClassNitta/riscv-console/blob/
 to find how to load the firmware and cartridge.
 
 Here is the effect of our sample game.
+
+
 ![](https://user-images.githubusercontent.com/16934019/205567793-e140dccb-6c8a-48c9-9d58-3fa1a6dfb489.gif)
 
 
