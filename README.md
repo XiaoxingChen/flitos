@@ -1,19 +1,19 @@
 
-# Flitos
+# FlitOS
 
-Flitos is a real-time operating system kernel for RISC-V machine. 
+FlitOS is a real-time operating system kernel for RISC-V machine. 
 The kernel currently supports 32-bit device only. 
-This project is part of UCDavis ECS251 project.
-This repo contains code of simulator UCDClassNitta/riscv-console.
+This project is part of UCDavis ECS251.
+This repo contains a simulator from UCDClassNitta/riscv-console.
 
 ## Table of Contents
 
-* [Flitos](#risc-v-console-simulator)
+* [FlitOS](#risc-v-console-simulator)
     * [Table of Contents](#table-of-contents)
     * [Getting Started](#getting-started)
     * [Test on riscv-console](#test-on-riscv-console)
     * [Test on qemu](#test-on-qemu)
-    * [Flitos Features](#flitos-features)
+    * [FlitOS Features](#flitos-features)
     * [Authors](#authors)
 
 
@@ -80,10 +80,10 @@ docker run --rm -it -v $(pwd):/code -p 5000:5000 --privileged --name riscv-toolc
 qemu-system-riscv32 -nographic -machine virt -device loader,file=bin/os_test_qemu -bios none
 ```
 
-## Flitos Features
+## FlitOS Features
 ### Thread Control
 
-Flitos supports thread `create`, `yield`, `join` and `sleep`.
+FlitOS supports thread `create`, `yield`, `join` and `sleep`.
 
 ### Synchronization
 
