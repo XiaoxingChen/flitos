@@ -93,10 +93,10 @@ A thread safe queue called `pipe` is provided for inter-thread communication.
 
 ## Authors
 
-- [Tianxiao Cheng](https://github.com/tttxcheng) 
+- [Xiaoxing Chen](https://github.com/XiaoxingChen)
 - [Yifeng Shi](https://github.com/Sterfan-shi)
 - [Siyuan Liu](https://github.com/uilnauyisDP)
-- [Xiaoxing Chen](https://github.com/XiaoxingChen)
+- [Tianxiao Cheng](https://github.com/tttxcheng) 
 
 ## Related Links
 
