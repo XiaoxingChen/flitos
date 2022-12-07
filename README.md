@@ -12,7 +12,6 @@ This repo contains a simulator from UCDClassNitta/riscv-console.
     * [Table of Contents](#table-of-contents)
     * [Getting Started](#getting-started)
     * [Test on riscv-console](#test-on-riscv-console)
-    * [Test on qemu](#test-on-qemu)
     * [FlitOS Features](#flitos-features)
     * [Authors](#authors)
 
@@ -20,16 +19,16 @@ This repo contains a simulator from UCDClassNitta/riscv-console.
 ## Getting Started
 The simulation environment and toolchain have been setup to run within a Docker container. The directions assume that you have git, Docker, X-11 support and a bash shell on your machine. If you are running on Windows and wish to use PowerShell follow the directions [here](docs/powershell.md). 
 
-### Clone Repository
-The code is available on github. Assuming you have ssh setup for git start by cloning the repository with the following command:
+### Extract Source Code
+
 ```
-git clone git@github.com:XiaoxingChen/flitos.git
+tar xzvf project_phase4_group1_handover.tgz
 ```
 
 ### Launch Docker Container
 Once the repository has been cloned, change directories into the riscv-console and run the console launch script with the command:
 ```
-cd flitos
+cd project_phase4_group1_handover
 ./rvconsole.sh
 ```
 Once the container is launched you should see a prompt like:
@@ -53,6 +52,21 @@ root@fedcba9876543210:/code# cd riscv-cart
 root@fedcba9876543210:/code/riscv-cart# make
 ```
 
+### Compile the Game for OS from Group 2 
+
+```
+root@fedcba9876543210:/code# cd port_group_2/birdApp
+root@fedcba9876543210:/code/port_group_2/birdApp# make
+```
+
+### Compile the Game for OS from Group 5
+
+```
+root@fedcba9876543210:/code# cd port_group_5/birdApp
+root@fedcba9876543210:/code/port_group_5/birdApp# make
+```
+
+
 ### Launch Simulator
 
 ```
@@ -67,18 +81,6 @@ Here is the effect of our sample game.
 
 ![](https://user-images.githubusercontent.com/16934019/205567793-e140dccb-6c8a-48c9-9d58-3fa1a6dfb489.gif)
 
-
-## Test on QEMU
-
-We use another docker image with QEMU inside to do simulation.
-
-```
-docker run --rm -it -v $(pwd):/code -p 5000:5000 --privileged --name riscv-toolchain pwn2de4d/riscv-toolchain
-```
-
-```
-qemu-system-riscv32 -nographic -machine virt -device loader,file=bin/os_test_qemu -bios none
-```
 
 ## FlitOS Features
 ### Thread Control
