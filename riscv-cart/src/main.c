@@ -82,7 +82,7 @@ int main() {
     initVideoSetting();
     // fetch bird position struct.
     struct position flappyBird;
-    flappyBird.y = 30;
+    flappyBird.y = 80;
     flappyBird.x = 30;
     flappyBird.mtx = mutexInit();
     thread_id_t th1 = threadCreate(idleThread, NULL);

@@ -66,7 +66,7 @@ void initVideoSetting() {
 
     setBackgroundControl(0, 0, 0, 0, 0);
     //  setBackgroundControl0(BACKGROUND_CONTROL_0);
-    setLargeSpriteControl(0, 64, 64, 30, 30, 1);
+    setLargeSpriteControl(0, 64, 64, 30, 80, 1);
     setLargeSpriteControl(1, 64, 64, 0, 0, 0);
     setLargeSpriteControl(2, 64, 64, 0, 0, 0);
     setBackgroundDataImage(0, bird_background_img);
