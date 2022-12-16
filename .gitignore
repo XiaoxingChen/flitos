@@ -37,3 +37,5 @@ bin/
 # User preferences for VS code
 .vscode/
 .idea/
+
+*/build/
