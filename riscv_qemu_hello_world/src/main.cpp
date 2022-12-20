@@ -15,7 +15,8 @@ int main() {
         UART_MEMORY[0] = msg[i];
     }
 
-    // VIRT_TEST[0] = 0x5555;
+    VIRT_TEST[0] = 0x5555;
+    // VIRT_TEST[0] = 0x7777;
 
     return a + b;
 }

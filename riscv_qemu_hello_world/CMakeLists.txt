@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(riscv_example LANGUAGES C CXX ASM)
-
 set(CMAKE_CXX_FLAGS "\
   -O0 \
   -g \
@@ -12,9 +10,7 @@ set(CMAKE_CXX_FLAGS "\
   -nodefaultlibs \
 ")
 
-set(TARGET riscv-console-example)
-
-set(TARGET_NAME riscv-console-example)
+set(TARGET_NAME riscv_qemu_hello_world)
 add_executable(${TARGET_NAME}.elf src/main.cpp src/startup.c src/crt0.s src/interrupt.s)
 SET(LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/riscv32-console.ld")
 set_target_properties(${TARGET_NAME}.elf PROPERTIES LINK_DEPENDS "${LINKER_SCRIPT}")
