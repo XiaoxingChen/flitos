@@ -1,7 +1,7 @@
 .section .text, "ax"
 
 .global _interrupt_handler
-
+.align 4
 _interrupt_handler:
     addi	sp,sp,-40
     sw	    ra,36(sp)

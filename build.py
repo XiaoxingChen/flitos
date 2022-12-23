@@ -119,10 +119,9 @@ class LinuxCrossCompileTarget(BuildTarget):
         cmake_generate_cmd += self.cmakeBaseOptions()
 
         cmake_build_cmd = 'cmake --build {}'.format(self.build_dir)
-        
-        # exec_ret = containerRun(cmake_generate_cmd + " && " + cmake_build_cmd, Dir.cmake_project)
+
         exec_ret = containerRun(cmake_generate_cmd, Dir.cmake_project)
-        # self.container.exec_run(cmake_generate_cmd + " && " + cmake_build_cmd, workdir=Dir().script_folder )
+        
         # print(str(exec_ret.output, encoding='utf-8'))
         if exec_ret != 0:
             print(exec_ret)
@@ -168,7 +167,7 @@ def containerRun(command, work_dir_in_container):
     client = docker.from_env()
     exit_code = 0
     try:
-        log = client.containers.run('shawsheenchen/riscv_qemu_dev', command, volumes=['/home/chenxx/engineering/riscv-console:/code'], remove=True, working_dir=work_dir_in_container)
+        log = client.containers.run('shawsheenchen/riscv_qemu_dev', command, volumes=[HostDir.cmake_project + ':/code'], remove=True, working_dir=work_dir_in_container)
         log = str(log, encoding='utf-8')
     except docker.errors.ContainerError as e:
         log = e
