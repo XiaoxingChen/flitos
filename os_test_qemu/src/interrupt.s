@@ -3,6 +3,7 @@
 
 .global _interrupt_handler
 .extern context_shot
+.align 4
 _interrupt_handler:
     context_snapshot context_shot
 

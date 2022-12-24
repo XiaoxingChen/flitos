@@ -10,7 +10,7 @@ sys.path.append( os.path.join(os.path.abspath(os.path.dirname(__file__)), 'scrip
 
 UNIX_CMAKE_STR = 'cmake {} -B{} -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE={}'
 MSVC_CMAKE_STR = 'cmake {} -B{} -G "Visual Studio 16 2019"'
-TEST_EXCUTABLE_NAME = 'test_main'
+TEST_EXCUTABLE_NAME = 'test_main.elf'
 CONTAINER_NAME = 'riscv-toolchain-gdbgui'
 IMAGE_TAG = ''
 
@@ -59,7 +59,7 @@ class BuildTarget():
 
         self.require_build = True
         if self.require_test:
-            self.host_exec_relative = os.path.join('tests', TEST_EXCUTABLE_NAME)
+            self.host_exec_relative = os.path.join('os_test_qemu', TEST_EXCUTABLE_NAME)
         elif platform_exe:
             self.host_exec_relative = platform_exe[0]
             self.exec_args = ' '.join(platform_exe[1:])
@@ -100,9 +100,9 @@ class BuildTarget():
     def checkExecutableValid(self):
         if self.host_exec is None:
             return False
-        if not os.path.isfile(self.host_exec):
-            print('Error: {} executable {} not found!'.format(self.platform, self.host_exec))
-            return False
+        # if not os.path.isfile(self.host_exec):
+        #     print('Error: {} executable {} not found!'.format(self.platform, self.host_exec))
+        #     return False
         return True
 
     @property
@@ -110,7 +110,7 @@ class BuildTarget():
         return os.path.join(Dir.build_root, self.platform)
 
 class LinuxCrossCompileTarget(BuildTarget):
-    platform = 'cross_compile_rv32'
+    platform = 'rv32'
 
     def runBuild(self):
         if not self.require_build:
@@ -134,9 +134,9 @@ class LinuxCrossCompileTarget(BuildTarget):
             exit(1)
 
     def runExecutable(self):
-        # if not self.checkExecutableValid():
-        #     return None
-        qemu_cmd = "qemu-system-riscv32 -nographic -machine virt -device loader,file=/code/build/{}/riscv_qemu_hello_world/riscv_qemu_hello_world.elf -bios none".format(self.platform)
+        if not self.checkExecutableValid():
+            return None
+        qemu_cmd = "qemu-system-riscv32 -nographic -machine virt -device loader,file=/code/build/{}/os_test_qemu/test_main.elf -bios none".format(self.platform)
         exec_ret = containerRun(qemu_cmd, Dir().script_folder)
         if exec_ret != 0:
             exit(1)

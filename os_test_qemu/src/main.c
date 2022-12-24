@@ -12,7 +12,7 @@
 
 
 #include <stddef.h>
-#include "thread_api.h"
+// #include "thread_api.h"
 
 #define THREAD_SAFE_PRINT_IMPLEMENTATION
 #include "thread_safe_print.h"
@@ -33,12 +33,11 @@ char * UART_MEMORY = (char*)(0x10000000);
 
 void idleThread(void* param)
 {
-    uint32_t offset = *(uint32_t*)param;
+    // uint32_t offset = *(uint32_t*)param;
     int cnt = 0;
     for(int i = 0; i < 1000;)
     {
-        VIDEO_MEMORY[offset] = '0' + cnt++ % 10;
-        // cs251::thread_yield();
+        cs251::thread_yield();
     }
 }
 
@@ -112,8 +111,8 @@ void threadPipeWrite(void* param)
     ecs::string msg("hello baby\n");
     while(1)
     {
-        // cs251::sleepTimerInstance().sleep(400);
-        threadSleep(400);
+        cs251::sleepTimerInstance().sleep(400);
+        // threadSleep(400);
         cs251::pipeFactoryInstance().write(pipe_id, (uint8_t*)msg.c_str(), msg.size());
     }
 }
@@ -147,10 +146,10 @@ void threadTestJoin1(void*)
 {
     int last_global = global;
     
-    for(int i = 0; i < 50; i++)
+    for(int i = 0; i < 10; i++)
     {
-        // cs251::sleepTimerInstance().sleep(400);
-        threadSleep(400);
+        cs251::sleepTimerInstance().sleep(400);
+        // threadSleep(400);
         printf("join 1 cnt: %d\n", i);
     }
     
@@ -161,67 +160,50 @@ void threadTestJoin1(void*)
 void threadTestJoin2(void*)
 {
     auto th_join_1 = cs251::schedulerInstance().create(threadTestJoin1, nullptr);
-    // cs251::schedulerInstance().join(th_join_1);
-    threadJoin(th_join_1);
+    cs251::schedulerInstance().join(th_join_1);
+    // threadJoin(th_join_1);
     printf("finish thread test join2\n");
 }
 
-namespace cs251
+void threadMain(void*)
 {
-    // void* g_scheduler_ = nullptr;
-    // void* g_mutex_factory = nullptr;
-} // namespace cs251
-// ecs::map<int, int> a;
+    cs251::initConsoleThread();
+    
+    ecs::vector<cs251::thread_id_t> threads_to_join;
+    int pipe_id = cs251::pipeFactoryInstance().open();
+    // threads_to_join.push_back(cs251::schedulerInstance().create(threadPipeRead, &pipe_id));
+    // threads_to_join.push_back(cs251::schedulerInstance().create(threadPipeWrite, &pipe_id));
 
-int cnt_var = 0;
-int finish_cnt = 0;
+    // threads_to_join.push_back(cs251::schedulerInstance().create(threadTestJoin2, nullptr));
+
+    printf("main thread\n");
+
+    for(size_t i = 0; i < threads_to_join.size(); i++)
+    {
+        cs251::schedulerInstance().join(threads_to_join.at(i));
+    }
+
+    printf("test finish\n");
+
+    uint32_t exit_code = 0;
+    uint32_t * VIRT_TEST = (uint32_t*)(0x10'0000);
+    VIRT_TEST[0] = (exit_code << 16) | 0x3333;
+    // VIRT_TEST[0] = 0x7777;
+    return;
+}
+
+
 
 int main() {
-    // increaseTimeCompare(0);
     
-    int last_global = 42;
-    
-    // memset(idleThreadStack, 0, IDLE_THREAD_STK_SIZE);
-    // for(int i = 0; i < IDLE_THREAD_STK_SIZE; i++)
-    // {
-    //     idleThreadStack[i] = i & 0xff;
-    // }
-    // initForIdleThread();
-    VIDEO_MEMORY[0x40 * 4] = '0';
     raw_printf("\n\n\n\n\n\n\n\n=== CS251 OS START! === \n\n\n\n\n\n\n\n");
 
-    uint32_t display_offsets[] = {0x40+0,0x40+1,0x40+2,0x40+3};
-
-    MutexCount mtx_cnt;
-    
-    mtx_cnt.p_counter = &cnt_var;
-    mtx_cnt.p_finish_cnt = &finish_cnt;
-    // mtx_cnt.p_counter = (int*)VIDEO_MEMORY;
-    mtx_cnt.mtx_counter = cs251::mutexFactoryInstance().create();
-    mtx_cnt.cond_counter = cs251::condFactoryInstance().create();
-
-    // scheduler.clearFinishedList();
     disable_interrupts();
     
-    cs251::initConsoleThread();
-    cs251::schedulerInstance().create(idleThread, &display_offsets[0]);
-    
-    
-    // cs251::schedulerInstance().create(idleThread, &display_offsets[1]);
-    
-    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    // cs251::schedulerInstance().create(mutexVerifyThread, &mtx_cnt);
-    // cs251::schedulerInstance().create(displayThread, &mtx_cnt);
-
-    int pipe_id = cs251::pipeFactoryInstance().open();
-    cs251::schedulerInstance().create(threadPipeRead, &pipe_id);
-    cs251::schedulerInstance().create(threadPipeWrite, &pipe_id);
-
-    cs251::schedulerInstance().create(threadTestJoin2, nullptr);
-    
+    cs251::schedulerInstance().create(idleThread, nullptr);
+    cs251::schedulerInstance().create(threadMain, nullptr);
     
     cs251::schedulerInstance().launchFirstTask();
-    while (1) ;
     
     return 0;
 }

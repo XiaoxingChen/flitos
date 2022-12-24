@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include "cs251_mutex.h"
 #include "cs251_condition_variable.h"
+#include "cs251_scheduler.h"
 
 namespace cs251
 {
@@ -31,7 +32,10 @@ public:
     void updateTick()
     { 
         systick_++; 
-        condFactoryInstance().notifyAll(cond_for_sleep_);
+        // if(schedulerInstance().allowPreemption())
+        {
+            condFactoryInstance().notifyAll(cond_for_sleep_);
+        }
     }
 
 private:
