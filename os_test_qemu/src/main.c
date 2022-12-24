@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "uart_printf.h"
 #include "ecs_string.h"
+#include "ecs_tests.h"
 
 #define CS251_OS_STATIC_OBJECTS_ON
 #define ALLOCATOR_IMPLEMENTATION
@@ -165,6 +166,13 @@ void threadTestJoin2(void*)
     printf("finish thread test join2\n");
 }
 
+void exitQemuIfError(int exit_code)
+{
+    if(0 == exit_code) return;
+    uint32_t * VIRT_TEST = (uint32_t*)(0x10'0000);
+    VIRT_TEST[0] = (exit_code << 16) | 0x3333;
+}
+
 void threadMain(void*)
 {
     cs251::initConsoleThread();
@@ -199,6 +207,8 @@ int main() {
     raw_printf("\n\n\n\n\n\n\n\n=== CS251 OS START! === \n\n\n\n\n\n\n\n");
 
     disable_interrupts();
+
+    exitQemuIfError(ecs::runFullTests());
     
     cs251::schedulerInstance().create(idleThread, nullptr);
     cs251::schedulerInstance().create(threadMain, nullptr);

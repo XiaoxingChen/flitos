@@ -9,6 +9,8 @@
 #if !defined(_ECS_LIST_H_)
 #define _ECS_LIST_H_
 
+#include "ecs_algorithm.h"
+
 namespace ecs
 {
 
@@ -221,20 +223,6 @@ private:
     Node<T>* begin_ = nullptr;
     Node<T>* rbegin_ = nullptr;
 };
-
-template<typename UnaryPredicate, class InputIt>
-InputIt find_if(
-    InputIt first, 
-    InputIt last,
-    UnaryPredicate f)
-{
-    for(; first != last; first++)
-    {
-        if(f(*first)) return first;
-    }
-
-    return last;
-}
 
 } // namespace ecs
 

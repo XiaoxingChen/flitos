@@ -11,17 +11,10 @@
 
 #include "ecs_list.h"
 #include "ecs_assert.h"
+#include "ecs_utility.h"
 
 namespace ecs
 {
-
-template<typename TKey, typename TValue>
-struct pair{
-    pair(const TKey& key, const TValue& val): first(key), second(val){}
-    pair() = default;
-    TKey first;
-    TValue second;
-};
 
 template<typename TKey, typename TValue>
 class map

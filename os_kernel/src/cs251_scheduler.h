@@ -6,6 +6,7 @@
 #include "ecs_list.h"
 #include "ecs_queue.h"
 #include "ecs_map.h"
+#include "ecs_unordered_map.h"
 #include "port_riscv.h"
 #include "ecs_assert.h"
 #include "ecs_allocator_nosys.h"
@@ -150,12 +151,14 @@ public:
 
     thread_id_t create(void (*f)(void*), void* arg, size_t thread_global_ptr)
     {
+        setPreemption(false);
         thread_counter_++;
         thread_id_t id = thread_counter_;
         id_tcb_map_[id] = ThreadControlBlock();
         id_tcb_map_[id].init(f, arg, thread_global_ptr);
         ready_list_.push_back(id);
         LOGD("create thread: %d\n", id);
+        setPreemption(true);
         return id;
     }
 
@@ -311,7 +314,7 @@ public:
 
     ThreadState threadState( thread_id_t tid ) const
     {
-        if(tid > thread_counter_) return ThreadState::eUNKNOWN;
+        if(size_t(tid) > thread_counter_) return ThreadState::eUNKNOWN;
         auto it = id_tcb_map_.find(tid);
         if(it == id_tcb_map_.end()) return ThreadState::eFINISHED;
         return it->second.state();
@@ -321,7 +324,11 @@ public:
 
     const ecs::deque<thread_id_t, ecs::allocator_nosys<thread_id_t>>& 
     readyList() const { return ready_list_; }
-    const ecs::map<thread_id_t, ThreadControlBlock>& idTcbMap() const { return id_tcb_map_; }
+
+    using IdTcbMapType = ecs::unordered_map<thread_id_t, ThreadControlBlock, ecs::allocator_nosys<ecs::pair<thread_id_t, ThreadControlBlock>>>;
+    // using IdTcbMapType = ecs::map<thread_id_t, ThreadControlBlock>;
+
+    const IdTcbMapType& idTcbMap() const { return id_tcb_map_; }
 private:
     // volatile int preemption_on_ = 0;
     thread_id_t running_thread_id_ = 0;
@@ -329,7 +336,7 @@ private:
     ecs::deque<thread_id_t, ecs::allocator_nosys<thread_id_t>> ready_list_;
     // ecs::list<thread_id_t> waiting_list_;
     ecs::list<thread_id_t> finished_list_;
-    ecs::map<thread_id_t, ThreadControlBlock> id_tcb_map_;
+    IdTcbMapType id_tcb_map_;
 };
 
 

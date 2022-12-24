@@ -46,6 +46,9 @@ public:
     vector(){};
     vector(size_t n) { resize(n); };
 
+    using iterator = T*;
+    using const_iterator = const T*;
+
     ~vector()
     {
         for(size_t i = 0; i < size(); i++)
@@ -120,7 +123,7 @@ public:
         mem_[size_] = v;
         size_ += 1;
     }
-    void pop_back()  {  size_ = 0 == size_ ? 0 : size_ - 1; }
+    void pop_back()  {  resize(size() > 0 ? size()-1 : 0); }
 
     const T& operator [] (size_t i) const { return mem_[i]; }
 
@@ -140,6 +143,12 @@ public:
     {
         resize(0);
     }
+
+    iterator begin() { return mem_; }
+    iterator end() { return &mem_[size_]; }
+
+    const_iterator begin() const { return mem_; }
+    const_iterator end() const { return &mem_[size_]; }
 };
 
 
