@@ -3,6 +3,7 @@
 #include "uart_printf.h"
 #include "ecs_string.h"
 #include "ecs_tests.h"
+#include "virtual_memory.h"
 
 #define CS251_OS_STATIC_OBJECTS_ON
 #define ALLOCATOR_IMPLEMENTATION
@@ -201,12 +202,22 @@ void threadMain(void*)
 }
 
 
+extern "C" int kmain()
+{
+    raw_printf("\n\n\n\n\n\n\n\n=== enter kmain() ===\n");
+
+    exitQemuIfError(1);
+    return 0;
+}
 
 int main() {
     
     raw_printf("\n\n\n\n\n\n\n\n=== CS251 OS START! === \n\n\n\n\n\n\n\n");
 
     disable_interrupts();
+
+    setup_pmp();
+    switchToSupervisorMode();
 
     exitQemuIfError(ecs::runFullTests());
     
