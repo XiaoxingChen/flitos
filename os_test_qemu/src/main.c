@@ -206,18 +206,18 @@ extern "C" int kmain()
 {
     raw_printf("\n\n\n\n\n\n\n\n=== enter kmain() ===\n");
 
-    exitQemuIfError(1);
+    exitQemuIfError(0);
     return 0;
 }
 
 int main() {
     
-    raw_printf("\n\n\n\n\n\n\n\n=== CS251 OS START! === \n\n\n\n\n\n\n\n");
+    raw_printf("\n\n\n\n\n\n\n\n=== CS251 OS START! === \n\n");
 
     disable_interrupts();
 
     setup_pmp();
-    switchToSupervisorMode();
+    // switchToSupervisorMode();
 
     exitQemuIfError(ecs::runFullTests());
     
